@@ -8,7 +8,7 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-data.import(ped, tped, gwas, pvalue, id.select)
+data.import(ped, tped, gwas_id, gwas_p, pvalue = 0.05, id.select = ped[, 2])
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -18,8 +18,11 @@ data.import(ped, tped, gwas, pvalue, id.select)
   \item{tped}{
 %%     ~~Describe \code{tped} here~~
 }
-  \item{gwas}{
-%%     ~~Describe \code{gwas} here~~
+  \item{gwas_id}{
+%%     ~~Describe \code{gwas_id} here~~
+}
+  \item{gwas_p}{
+%%     ~~Describe \code{gwas_p} here~~
 }
   \item{pvalue}{
 %%     ~~Describe \code{pvalue} here~~
@@ -59,23 +62,32 @@ data.import(ped, tped, gwas, pvalue, id.select)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (ped, tped, gwas, pvalue, id.select) 
+function (ped, tped, gwas_id, gwas_p, pvalue = 0.05, id.select = ped[, 
+    2]) 
 {
     a.s <- ped[, c(2, 7:ncol(ped))]
     snp <- rep((as.character(tped[, 2])), each = 2)
     snp <- append(snp, "ID", after = 0)
     colnames(a.s) <- c(snp)
-    gwas.select <- as.data.frame(cbind(row.names(gwas), gwas@results$P1df))
-    gwas.select$V2 <- as.numeric(as.character(gwas.select$V2))
-    p.select <- gwas.select[gwas.select$V2 < pvalue, ]
-    snp.select <- p.select$V1
+    gwas.select <- cbind(gwas_id, gwas_p)
+    gwas.select <- as.data.frame(gwas.select)
+    gwas.select$gwas_p <- as.numeric(as.character(gwas.select$gwas_p))
+    p.select <- gwas.select[gwas.select$gwas_p < pvalue, ]
+    snp.select <- p.select$gwas_id
     snps <- rep(snp.select, each = 2)
     snps <- append(as.character(snps), "ID", after = 0)
     a.snps <- a.s[, snps]
-    id.snps <- a.snps[a.snps$ID \%in\% id.select, ]
-    rownames(id.snps) <- id.snps[, 1]
-    id.snps <- id.snps[, 2:ncol(id.snps)]
-    return(id.snps)
+    rownames(a.snps) <- a.snps[, 1]
+    input <- a.snps[, 2:ncol(a.snps)]
+    ind <- data.frame(matrix(c((1:ncol(input)), rep(NA, 2 - ncol(input)\%\%2)), 
+        byrow = F, nrow = 2))
+    nonna <- ind[, sapply(ind, function(x) all(!is.na(x)))]
+    genotype <- do.call(cbind, lapply(nonna, function(i) rowMeans(input[, 
+        i])))
+    x <- colnames(input[1:(ncol(input) - 1)])
+    colnames(genotype) <- x[c(T, F)]
+    genotype <- replace(genotype, genotype == 0, "NA")
+    return(as.data.frame(genotype))
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

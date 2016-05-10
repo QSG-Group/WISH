@@ -8,18 +8,18 @@
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
 }
 \usage{
-epistatic.correlation(gwas, pvalue, matrix, phenotype, genotype, trait)
+epistatic.correlation(gwas_id, gwas_p, pvalue = 1e-04, phenotype, genotype, parallel = 20)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{gwas}{
-%%     ~~Describe \code{gwas} here~~
+  \item{gwas_id}{
+%%     ~~Describe \code{gwas_id} here~~
+}
+  \item{gwas_p}{
+%%     ~~Describe \code{gwas_p} here~~
 }
   \item{pvalue}{
 %%     ~~Describe \code{pvalue} here~~
-}
-  \item{matrix}{
-%%     ~~Describe \code{matrix} here~~
 }
   \item{phenotype}{
 %%     ~~Describe \code{phenotype} here~~
@@ -27,8 +27,8 @@ epistatic.correlation(gwas, pvalue, matrix, phenotype, genotype, trait)
   \item{genotype}{
 %%     ~~Describe \code{genotype} here~~
 }
-  \item{trait}{
-%%     ~~Describe \code{trait} here~~
+  \item{parallel}{
+%%     ~~Describe \code{parallel} here~~
 }
 }
 \details{
@@ -62,25 +62,35 @@ epistatic.correlation(gwas, pvalue, matrix, phenotype, genotype, trait)
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (gwas, pvalue, matrix, phenotype, genotype, trait) 
+function (gwas_id, gwas_p, pvalue = 1e-04, phenotype, genotype, 
+    parallel = 20) 
 {
-    cand <- which(gwas@results$P1df <= pvalue)
-    phenotype <- phenotype[with(phenotype, order(id)), ]
-    genotype <- genotype[rownames(genotype) \%in\% phenotype$id, 
-        ]
-    genotype <- genotype[, colnames(genotype) \%in\% rownames(gwas)]
-    for (i in 1:(nrow(matrix) - 1)) {
-        matrix[i, (i + 1):nrow(matrix)] <- foreach(j = (i + 1):nrow(matrix), 
-            .combine = "rbind", .inorder = T, .verbose = F) \%dopar\% 
-            {
-                phenotype$SNP1 = (genotype[, cand[i]])
-                phenotype$SNP2 = (genotype[, cand[j]])
-                correlation = asreml(trait ~ 1 + SNP1 + SNP2 + 
-                  SNP1 * SNP2, na.method.X = "omit", na.method.y = "omit", 
-                  data = phenotype)
-                return(correlation$coefficients$fixed[1])
-            }
+    registerDoParallel(parallel)
+    gwas <- cbind(gwas_id, gwas_p)
+    gwas <- as.data.frame(gwas)
+    gwas$gwas_p <- as.numeric(as.character(gwas$gwas_p))
+    gwas <- gwas[gwas$gwas_id \%in\% colnames(genotype), ]
+    cand <- gwas[gwas$gwas_p < pvalue, ]
+    snp_matrix <- matrix(NA, nrow = nrow(cand), ncol = nrow(cand))
+    rownames(snp_matrix) <- cand$gwas_id
+    colnames(snp_matrix) <- cand$gwas_id
+    cand <- which(gwas$gwas_p <= pvalue)
+    for (i in 1:(nrow(snp_matrix) - 1)) {
+        snp_matrix[i, (i + 1):nrow(snp_matrix)] <- foreach(j = (i + 
+            1):nrow(snp_matrix), .combine = "rbind", .inorder = T, 
+            .verbose = F) \%dopar\% {
+            phenotype$SNP1 = as.numeric((genotype[, cand[i]]))
+            phenotype$SNP2 = as.numeric((genotype[, cand[j]]))
+            tmp_correlation = asreml(OI ~ 1 + SNP1 + SNP2 + SNP1 * 
+                SNP2, na.method.X = "omit", na.method.Y = "omit", 
+                data = phenotype)
+            return(tmp_correlation$coefficients$fixed[1])
+        }
     }
+    new <- t(snp_matrix)
+    diag(new) <- 1
+    new[upper.tri(new)] <- snp_matrix[upper.tri(snp_matrix)]
+    return(new)
   }
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
