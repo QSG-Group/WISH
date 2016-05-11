@@ -1,10 +1,12 @@
 Package: WISH
 Type: Package
-Title: What the package does (short line)
+Title: Network construction of whole genome genotype data using the
+WISH network method
 Version: 1.0
 Date: 2016-05-10
 Author: Who wrote it
 Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Description: MDescription: The Weighted Interaction SNP Hub network method uses high-throughput genotype data to detect genome-wide interactions between SNPs and its relation with complex traits. Data dimensionality reduction is achieved by selecting SNPs based on its degree of genome-wide significance and degree of genetic variation in a population. Network construction is based on pairwise Pearson's correlation between SNP genotypes or the epistatic interaction effect between SNP pairs. To identify modules the Topological Overlap Measure is calculated, reflecting the degree of overlap in shared neighbours between SNP pairs. Modules, clusters of highly interconnected SNPs, are defined using a tree-cutting algorithm on the SNP dendrogram created from the dissimilarity TOM. Modules are selected for functional annotation based on their association with the trait of interest, defined by the Genome-wide Module Association Test. 
+
 License: What license is it under?
 RoxygenNote: 5.0.1
