@@ -83,6 +83,7 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
 #' ASReml and can be used directly in the WISH network construction.
 #' @usage epistatic.correlation(phenotype, genotype, parallel)
 #' @import doParallel
+#' @import RcppEigen
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Only give one phenotype column at a time. Phenotypes
