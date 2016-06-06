@@ -1,7 +1,3 @@
-#library("GenABEL")
-#library("asreml")
-#library("doParallel")
-#library("sna")
 
 #' Import genotype data in the correct format for network construction
 #' @export

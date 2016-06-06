@@ -3,28 +3,21 @@
 \name{epistatic.correlation}
 \alias{epistatic.correlation}
 \title{Calculate the epistatic interaction effect between SNP pairs to construct a 
-WISH network}
+WISH network using a genotype data frame created from genarate.genotype()}
 \usage{
-epistatic.correlation(gwas, pvalue, phenotype, genotype, parallel)
-ASReml-R: library("asreml")
-package doParralel: library("doParallel")
-package sna: library("sna")
+epistatic.correlation(phenotype, genotype, parallel)
 }
 \arguments{
-\item{gwas_id}{A vector of all SNPs in the GWAS}
-
-\item{gwas_p}{A vector of the p-values corresponding to the gwas_id vector}
-
-\item{pvalue}{A value for the cutoff of the SNPs which should be remained 
-in the matrix, based on the pvalue resulting from the GWAS}
-
-\item{phenotype}{Dataframe with on the rows the individuals in the analysis,
-and columns for the different measured phenotypes and fixed/random factors
-(e.g. sex)}
+\item{phenotype}{Dataframe with the rows correspinding to the individuals
+in the analysis,and columns for the different measured phenotypes and 
+fixed/random factors. Only give one phenotype column at a time. Phenotypes
+should be continous variables. Make sure that the dataframe contains the same
+individuals as in the genotype-file, and that those are in the same order.}
 
 \item{genotype}{Dataframe with the genotype information, resulting from 
-the function data.import. Make sure that the dataframe contains the same
-individuals as in the phenotype-file, and that those are in the same order.}
+the function generate.genotype(). Make sure that the dataframe contains the 
+same individuals as in the phenotype-file, and that those are in the 
+same order.}
 
 \item{parallel}{Number of cores to use for parallel execution in the function 
 registerDoParallel()}
