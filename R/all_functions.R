@@ -123,9 +123,6 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   }
   genotype <- as.data.frame(genotype)
   genotype[] <- lapply(genotype, as.factor)
-  print(dim(snp_matrix))
-  print(dim(genotype))
-  print(dim(genotypen))
   for (i in 1:(nrow(snp_matrix)-1)) {
     snp_matrix[i, (i+1):nrow(snp_matrix)] <- foreach(j = (i+1):nrow(snp_matrix), .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       tmp_correlation = fastLm(phenotype[,1] ~ genotype[,i]+genotype[,j]+I(genotypen[,i]*genotypen[,j]))
