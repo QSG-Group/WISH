@@ -4,11 +4,7 @@
 \alias{generate.genotype}
 \title{Import genotype data in the correct format for network construction}
 \usage{
-generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
-genomic correlations aswell epistatic interactions a genotype matrix has to be
-created, consisting of one numeric value per SNP, per individual. This function
-takes Plink output (1,2-coding) to create the genotype matrix which can be used
-to calculate genomic correlations or epistatic interaction effects
+generate.genotype(ped, tped, gwas_id, pvalue=0.05, id.select=ped[,2],gwas_p=NULL)
 }
 \arguments{
 \item{ped}{The ped file (.ped) is an input file from Plink: The PED file is a
@@ -32,7 +28,8 @@ each line. Again, SNPs are 1,2-coded.}
 \item{gwas_id}{A vector of all SNPs in the GWAS}
 
 \item{pvalue}{A value for the cutoff of the SNPs which should be remained 
-in the matrix, based on the pvalue resulting from the GWAS}
+in the matrix, based on the pvalue resulting from the GWAS. Default value
+is 0.05}
 
 \item{id.select}{If requested, a subset of individuals can be 
 selected (e.g. extremes). If nothing inserted, all individuals are in the
@@ -49,13 +46,17 @@ A genotype dataframe with a row for each individual and a column
  Missing values are NA coded.
 }
 \description{
-For network construction based on both
+For network construction based on both #' genomic correlations
+as well as epistatic interactions a genotype matrix has to be
+created, consisting of one numeric value per SNP, per individual. This function
+takes Plink output (1,2-coding) to create the genotype matrix which can be used
+to calculate genomic correlations or epistatic interaction effects
 }
 \details{
 There is so much to be said
 }
 \examples{
-data.import(ped, tped, gwas_id, gwas_p, pvalue, id.select)
+generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 
 
 }

@@ -1,12 +1,12 @@
 
 #' Import genotype data in the correct format for network construction
 #' @export
-#' @description For network construction based on both
-#' @usage generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
-#' genomic correlations aswell epistatic interactions a genotype matrix has to be
+#' @description For network construction based on both #' genomic correlations
+#' as well as epistatic interactions a genotype matrix has to be
 #' created, consisting of one numeric value per SNP, per individual. This function
 #' takes Plink output (1,2-coding) to create the genotype matrix which can be used
 #' to calculate genomic correlations or epistatic interaction effects 
+#' @usage generate.genotype(ped, tped, gwas_id, pvalue=0.05, id.select=ped[,2],gwas_p=NULL)
 #' @param ped The ped file (.ped) is an input file from Plink: The PED file is a
 #' white-space (space or tab) delimited file: the first six columns are mandatory:
 #' Family ID, Idividual ID, Paternal ID, Maternal ID, 
@@ -24,14 +24,15 @@
 #' Then all genotypes are listed for all individuals for each particular SNP on 
 #' each line. Again, SNPs are 1,2-coded.
 #' @param gwas_id  A vector of all SNPs in the GWAS
-#' @param gwas_p **optional** A vector of the p-values corresponding to 
-#' the gwas_id vector. If assigned, will select snps based on the pvalue
-#' parameter with a default value of 0.05.
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
-#' in the matrix, based on the pvalue resulting from the GWAS
+#' in the matrix, based on the pvalue resulting from the GWAS. Default value
+#' is 0.05
 #' @param id.select If requested, a subset of individuals can be 
 #' selected (e.g. extremes). If nothing inserted, all individuals are in the
 #' output
+#' @param gwas_p **optional** A vector of the p-values corresponding to 
+#' the gwas_id vector. If assigned, will select snps based on the pvalue
+#' parameter with a default value of 0.05.
 #' @return A genotype dataframe with a row for each individual and a column
 #'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
 #'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
@@ -43,7 +44,7 @@
 #' BMC Systems Biology 8(Suppl 2):S5. 
 #' http://www.biomedcentral.com/1752-0509/8/S2/S5.
 #' @examples
-#' data.import(ped, tped, gwas_id, gwas_p, pvalue, id.select)
+#' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
 #'
 generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
@@ -104,7 +105,7 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
 #' BMC Systems Biology 8(Suppl 2):S5. 
 #' http://www.biomedcentral.com/1752-0509/8/S2/S5.
 #' @examples
-#' epistatic.correlation(gwas, pvalue, phenotype, genotype, parallel)
+#' epistatic.correlation(phenotype,genotype,parallel)
 #' 
 #' 
 epistatic.correlation <- function(phenotype,genotype,parallel=1 ){

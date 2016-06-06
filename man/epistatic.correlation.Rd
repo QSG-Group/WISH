@@ -33,7 +33,7 @@ effects between SNP pairs. Those interaction effects are calculated using
 ASReml and can be used directly in the WISH network construction.
 }
 \examples{
-epistatic.correlation(gwas, pvalue, phenotype, genotype, parallel)
+epistatic.correlation(phenotype,genotype,parallel)
 
 
 }
