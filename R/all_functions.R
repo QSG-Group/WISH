@@ -96,9 +96,11 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
 #' same order.
 #' @param parallel Number of cores to use for parallel execution in the function 
 #' registerDoParallel()
-#' @return The resulting matrix gives the epistatic interaction effects between
+#' @return A list of two matrices. The first matrix gives the epistatic
+#'  interaction effects between
 #' all the SNP-pairs which were in the input (genotype data) and selected with
-#' the pvalue from the GWAS results. 
+#' the pvalue from the GWAS results. The second matrix are the corresponding
+#' pvalues of the parameter estimates of the epistatic interactions. 
 #' @references Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
 #' Weighted Interaction SNP Hub (WISH) network method for building genetic
 #' networks for complex diseases and traits using whole genome genotype data.
@@ -110,8 +112,8 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
 #' 
 epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   registerDoParallel(parallel)
-  snp_matrix <- matrix(NA, nrow=ncol(genotype),ncol=ncol(genotype))
-  rownames(snp_matrix)<- colnames(genotype)
+  snp_matrix <- matrix(NA, nrow=2*(ncol(genotype)),ncol=ncol(genotype))
+  rownames(snp_matrix)<- rep(colnames(genotype),each=2)
   colnames(snp_matrix)<- colnames(genotype)
   if(is.data.frame(genotype)){
     genotypen <- genotype
@@ -123,14 +125,22 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   }
   genotype <- as.data.frame(genotype)
   genotype[] <- lapply(genotype, as.factor)
-  for (i in 1:(nrow(snp_matrix)-1)) {
-    snp_matrix[i, (i+1):nrow(snp_matrix)] <- foreach(j = (i+1):nrow(snp_matrix), .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      tmp_correlation = fastLm(phenotype[,1] ~ genotype[,i]+genotype[,j]+I(genotypen[,i]*genotypen[,j]))
-      return(tmp_correlation$coefficients[length(tmp_correlation$coefficients)])
+  #The structure here ensures we only calculate one half of the matrix, and return in such a way to get both epistatic interactions and pvalues i
+  # one go.
+  for (i in 1:(ncol(snp_matrix)-1)) {
+    snp_matrix[c(i+(i-1),2*i),(i+1):ncol(snp_matrix)] <- foreach(j = (i+1):ncol(snp_matrix), .combine='cbind', .inorder=T, .verbose=F) %dopar% {
+      tmp_model = fastLm(phenotype[,1] ~ genotype[,i]+genotype[,j]+I(genotypen[,i]*genotypen[,j]))
+      return(c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4]))
     }
   }
-  new <- t(snp_matrix)
-  diag(new) <- 1
-  new[upper.tri(new)]<- snp_matrix[upper.tri(snp_matrix)]
-  return(new)
+  # Transposing and filling out the correlation and pvalue matrix
+  epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]
+  epi_pvalue <-   snp_matrix[seq(2,nrow(snp_matrix),2),]
+  epi_cor_t <- t(epi_cor)
+  epi_pvalue_t <- t(epi_pvalue)
+  diag(epi_cor_t) <- 1
+  diag(epi_pvalue_t) <- 1
+  epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
+  epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
+  return(list(epi_cor_t,epi_pvalue_t))
 }  

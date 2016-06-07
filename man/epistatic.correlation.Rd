@@ -23,9 +23,11 @@ same order.}
 registerDoParallel()}
 }
 \value{
-The resulting matrix gives the epistatic interaction effects between
+A list of two matrices. The first matrix gives the epistatic
+ interaction effects between
 all the SNP-pairs which were in the input (genotype data) and selected with
-the pvalue from the GWAS results.
+the pvalue from the GWAS results. The second matrix are the corresponding
+pvalues of the parameter estimates of the epistatic interactions.
 }
 \description{
 A WISH network can be build based on epistatic interaction 
