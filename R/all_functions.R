@@ -18,11 +18,6 @@
 #' (i.e. based on whether a value other than 0, 1, 2 or the missing genotype 
 #' code is observed). SNPs are 1,2-coded (1 for major allele,2 for minor allele) 
 #' For more information: http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml#ped
-#' @param tped The tped file (.tped) is a transposed ped file, from Plink. 
-#' This file contains the SNP and genotype information where one row is a SNP.
-#' The first 4 columns of a TPED file are the same as a 4-column MAP file.
-#' Then all genotypes are listed for all individuals for each particular SNP on 
-#' each line. Again, SNPs are 1,2-coded.
 #' @param gwas_id  A vector of all SNPs in the GWAS
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
 #' in the matrix, based on the pvalue resulting from the GWAS. Default value
@@ -47,14 +42,13 @@
 #' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
 #'
-generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
+generate.genotype <- function(ped,gwas_id,pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
   if(is.null(gwas_p)){
     genotype <- matrix(nrow=nrow(ped),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
     colnames(genotype) <- gwas_id
     snps<-which(tped[,2]%in%gwas_id)
     ids<-which(ped[,2]%in%id.select)
-    tped_trim <- tped[snps,c(1:4,sort(rep(2*ids,each=2)-(1:(2*length(ids)))%%2)+4)]
     ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
@@ -69,7 +63,6 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
     colnames(genotype) <- gwas_id
     snps<-which(tped[,2]%in%gwas_id)
     ids<-which(ped[,2]%in%id.select)
-    tped_trim <- tped[snps,c(1:4,sort(rep(2*ids,each=2)-(1:(2*length(ids)))%%2)+4)]
     ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
