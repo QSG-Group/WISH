@@ -47,7 +47,7 @@
 #' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
 #'
-generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
+generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
   if(is.null(gwas_p)){
     genotype <- matrix(nrow=nrow(ped),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
@@ -56,6 +56,7 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
     ids<-which(ped[,2]%in%id.select)
     tped_trim <- tped[snps,c(1:4,sort(rep(2*ids,each=2)-(1:(2*length(ids)))%%2)+4)]
     ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
+    ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
       genotype[,i] <- rowMeans((ped_trim[,c(2*i+5,2*i+6)]))
     }
@@ -70,6 +71,7 @@ generate.genotype <- function(ped,tped,gwas_id,pvalue=0.05,id.select=ped[,2],gwa
     ids<-which(ped[,2]%in%id.select)
     tped_trim <- tped[snps,c(1:4,sort(rep(2*ids,each=2)-(1:(2*length(ids)))%%2)+4)]
     ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
+    ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
       genotype[,i] <- rowMeans((ped_trim[,c(2*i+5,2*i+6)]))
     }
