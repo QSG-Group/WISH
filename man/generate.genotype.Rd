@@ -19,6 +19,12 @@ column: PLINK will automatically detect which type
 code is observed). SNPs are 1,2-coded (1 for major allele,2 for minor allele) 
 For more information: http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml#ped}
 
+\item{tped}{The tped file (.tped) is a transposed ped file, from Plink. 
+This file contains the SNP and genotype information where one row is a SNP.
+The first 4 columns of a TPED file are the same as a 4-column MAP file.
+Then all genotypes are listed for all individuals for each particular SNP on 
+each line. Again, SNPs are 1,2-coded.}
+
 \item{gwas_id}{A vector of all SNPs in the GWAS}
 
 \item{pvalue}{A value for the cutoff of the SNPs which should be remained 
