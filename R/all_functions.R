@@ -49,33 +49,69 @@
 #'
 generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
   if(is.null(gwas_p)){
-    genotype <- matrix(nrow=nrow(ped),ncol=length(c(gwas_id)))
+    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
     colnames(genotype) <- gwas_id
-    snps<-which(tped[,2]%in%gwas_id)
-    ids<-which(ped[,2]%in%id.select)
-    ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
+    if (length(c(gwas_id))==length(c(tped[,2]))){
+      snps <- c(1:dim(tped)[1])
+    }
+    else {
+      snps<-which(tped[,2]%in%gwas_id)  
+    }
+    if (length(c(id.select))==length(c(ped[,2]))){
+      ids <- c(1:dim(ped)[1])
+      ped_trim <- as.matrix(ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)])
+    }
+    else {
+      ids<-which(ped[,2]%in%id.select)
+      ped_trim <- as.matrix(ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)])
+    }
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
-      genotype[,i] <- rowMeans((ped_trim[,c(2*i+5,2*i+6)]))
+      genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
   if(!(is.null(gwas_p))){
     gwas_id <- as.vector(gwas_id)
     gwas_id <- gwas_id[as.vector(gwas_p) <= pvalue]
-    genotype <- matrix(nrow=nrow(ped),ncol=length(c(gwas_id)))
+    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
     colnames(genotype) <- gwas_id
-    snps<-which(tped[,2]%in%gwas_id)
-    ids<-which(ped[,2]%in%id.select)
-    ped_trim <- ped[ids,c(1:6,sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
+    if (length(c(gwas_id))==length(c(tped[,2]))){if (length(c(gwas_id))==length(c(tped[,2]))){
+      snps <- c(1:dim(tped)[1])
+    }
+      else {
+        snps<-which(tped[,2]%in%gwas_id)  
+      }
+      if (length(c(id.select))==length(c(ped[,2]))){
+        ids <- c(1:dim(ped)[1])
+        ped_trim <- ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)]
+      }
+      else {
+        ids<-which(ped[,2]%in%id.select) 
+        ped_trim <- ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
+      }
+      snps <- c(1:dim(tped)[1])
+    }
+    else {
+      snps<-which(tped[,2]%in%gwas_id)  
+    }
+    if (length(c(id.select))==length(c(ped[,2]))){
+      ids <- c(1:dim(ped)[1])
+      ped_trim <- as.matrix(ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)])
+    }
+    else {
+      ids<-which(ped[,2]%in%id.select) 
+      ped_trim <- as.matrix(ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)])
+    }
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
-      genotype[,i] <- rowMeans((ped_trim[,c(2*i+5,2*i+6)]))
+      genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
   return(genotype)
 }
+
 #' Calculate the epistatic interaction effect between SNP pairs to construct a 
 #' WISH network using a genotype data frame created from genarate.genotype()
 #' @export
