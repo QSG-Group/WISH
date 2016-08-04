@@ -2,7 +2,7 @@
 
 #Loading Packages
 library("RcppEigen")
-library("doParalllel")
+library("doParallel")
 
 
 #' Import genotype data in the correct format for network construction
