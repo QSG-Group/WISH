@@ -1,4 +1,10 @@
 
+
+#Loading Packages
+library("RcppEigen")
+library("doParalllel")
+
+
 #' Import genotype data in the correct format for network construction
 #' @export
 #' @description For network construction based on both #' genomic correlations
