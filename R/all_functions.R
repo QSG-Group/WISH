@@ -51,6 +51,8 @@
 #' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
 #' @export
+#' 
+#' 
 generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL,major_freq=0.95) {
   if(is.null(gwas_p)){
     genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
@@ -115,6 +117,7 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
+  #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
   passing_snps <- which((colSums((genotype == 2),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major_freq))
   genotype <- genotype[,passing_snps]
   snps <- gwas_id[passing_snps]
@@ -155,26 +158,41 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
 #' epistatic.correlation(phenotype,genotype,parallel)
 #' 
 #' @export
+
 epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   registerDoParallel(parallel)
   snp_matrix <- matrix(NA, nrow=2*(ncol(genotype)),ncol=ncol(genotype))
   rownames(snp_matrix)<- rep(colnames(genotype),each=2)
   colnames(snp_matrix)<- colnames(genotype)
+  snp_matrix_rev <- snp_matrix
   if(is.data.frame(genotype)){
     genotypen <- genotype
     genotypen[] <- lapply(genotypen, as.numeric)
     genotypen<-as.matrix(genotypen)
+    genotypen_rev <- genotypen
   }
   else {
     genotypen <- genotype
+    genotypen_rev <- genotype
   }
   genotype <- as.data.frame(genotype)
   genotype[] <- lapply(genotype, as.factor)
+  decide_1<-(genotypen_rev==1)
+  decide_2<-(genotypen_rev==2)
+  genotypen_rev[decide_1] <- 2
+  genotypen_rev[decide_2] <- 1
   #The structure here ensures we only calculate one half of the matrix, and return in such a way to get both epistatic interactions and pvalues i
   # one go.
   for (i in 1:(ncol(snp_matrix)-1)) {
     snp_matrix[c(i+(i-1),2*i),(i+1):ncol(snp_matrix)] <- foreach(j = (i+1):ncol(snp_matrix), .combine='cbind', .inorder=T, .verbose=F) %dopar% {
       tmp_model = fastLm(phenotype[,1] ~ genotype[,i]+genotype[,j]+I(genotypen[,i]*genotypen[,j]))
+      return(c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4]))
+    }
+  }
+  # Running opposite minor/major co-linearity model
+  for (i in 1:(ncol(snp_matrix_rev)-1)) {
+    snp_matrix_rev[c(i+(i-1),2*i),(i+1):ncol(snp_matrix_rev)] <- foreach(j = (i+1):ncol(snp_matrix_rev), .combine='cbind', .inorder=T, .verbose=F) %dopar% {
+      tmp_model = fastLm(phenotype[,1] ~ genotype[,i]+genotype[,j]+I(genotypen_rev[,j]*genotypen[,i]))
       return(c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4]))
     }
   }
@@ -187,5 +205,28 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   diag(epi_pvalue_t) <- 1
   epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
   epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
+  epi_cor_t_1 <- epi_cor_t
+  epi_pvalue_t_1 <- epi_pvalue_t
+  epi_cor_t_1[is.na(epi_cor_t_1)] <- 0
+  epi_pvalue_t_1[is.na(epi_pvalue_t_1)] <- 1
+  # Opposite assumption correlation and pvalue matrix
+  epi_cor <- snp_matrix_rev[seq(1,nrow(snp_matrix_rev)-1,2),]
+  epi_pvalue <-   snp_matrix_rev[seq(2,nrow(snp_matrix_rev),2),]
+  epi_cor_t <- t(epi_cor)
+  epi_pvalue_t <- t(epi_pvalue)
+  diag(epi_cor_t) <- 1
+  diag(epi_pvalue_t) <- 1
+  epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
+  epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
+  epi_cor_t_2 <- epi_cor_t
+  epi_pvalue_t_2 <- epi_pvalue_t
+  epi_cor_t_2[is.na(epi_cor_t_2)] <- 0
+  epi_pvalue_t_2[is.na(epi_pvalue_t_2)] <- 1
+  #Picking the correct model assumption based on lowest pvalue
+  decider_matrix <- epi_pvalue_t_1-epi_pvalue_t_2
+  epi_pvalue_t <- epi_pvalue_t_1
+  epi_pvalue_t[0.001 < decider_matrix] <- epi_pvalue_t_2[0.001 < decider_matrix]
+  epi_cor_t <- epi_cor_t_1
+  epi_cor_t[0.01 < decider_matrix] <- epi_cor_t_2[0.01 < decider_matrix]
   return(list(epi_cor_t,epi_pvalue_t))
-}  
+}
