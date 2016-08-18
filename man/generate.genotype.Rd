@@ -38,9 +38,13 @@ output}
 \item{gwas_p}{**optional** A vector of the p-values corresponding to 
 the gwas_id vector. If assigned, will select snps based on the pvalue
 parameter with a default value of 0.05.}
+
+\item{major_freq}{Maximum major allele frequency allowed in each variant. 
+Default value is 0.95.}
 }
 \value{
-A genotype dataframe with a row for each individual and a column
+A genotype dataframe and the corresponding vector of passing snps in a vector.
+The genotype data frame has a row for each individual and a column
  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
  Missing values are NA coded.

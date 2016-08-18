@@ -1,6 +1,5 @@
 
 
-#Loading Packages
 
 #' Import genotype data in the correct format for network construction
 #' @description For network construction based on both #' genomic correlations
@@ -35,7 +34,10 @@
 #' @param gwas_p **optional** A vector of the p-values corresponding to 
 #' the gwas_id vector. If assigned, will select snps based on the pvalue
 #' parameter with a default value of 0.05.
-#' @return A genotype dataframe with a row for each individual and a column
+#' @param major_freq Maximum major allele frequency allowed in each variant. 
+#' Default value is 0.95. 
+#' @return A genotype dataframe and the corresponding vector of passing snps in a vector.
+#' The genotype data frame has a row for each individual and a column
 #'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
 #'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
 #'  Missing values are NA coded. 
@@ -49,7 +51,7 @@
 #' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
 #' @export
-generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
+generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL,major_freq=0.95) {
   if(is.null(gwas_p)){
     genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
@@ -79,9 +81,11 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
     genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
     rownames(genotype) <- id.select
     colnames(genotype) <- gwas_id
-    if (length(c(gwas_id))==length(c(tped[,2]))){if (length(c(gwas_id))==length(c(tped[,2]))){
-      snps <- c(1:dim(tped)[1])
-    }
+    if (length(c(gwas_id))==length(c(tped[,2]))){
+      if (length(c(gwas_id))==length(c(tped[,2])))
+      {
+        snps <- c(1:dim(tped)[1])
+      }
       else {
         snps<-which(tped[,2]%in%gwas_id)  
       }
@@ -111,8 +115,12 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
-  return(genotype)
+  passing_snps <- which((colSums((genotype == 2 | genotype == 1.5),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major_freq))
+  genotype <- genotype[,passing_snps]
+  snps <- gwas_id[passing_snps]
+  return(list(genotype,snps))
 }
+
 
 #' Calculate the epistatic interaction effect between SNP pairs to construct a 
 #' WISH network using a genotype data frame created from genarate.genotype()
