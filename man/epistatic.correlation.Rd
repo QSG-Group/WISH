@@ -37,7 +37,6 @@ ASReml and can be used directly in the WISH network construction.
 \examples{
 epistatic.correlation(phenotype,genotype,parallel)
 
-
 }
 \references{
 Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 

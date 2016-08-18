@@ -58,7 +58,6 @@ There is so much to be said
 \examples{
 generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 
-
 }
 \references{
 Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
