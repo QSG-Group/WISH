@@ -1,12 +1,8 @@
 
 
 #Loading Packages
-library("RcppEigen")
-library("doParallel")
-
 
 #' Import genotype data in the correct format for network construction
-#' @export
 #' @description For network construction based on both #' genomic correlations
 #' as well as epistatic interactions a genotype matrix has to be
 #' created, consisting of one numeric value per SNP, per individual. This function
@@ -52,7 +48,7 @@ library("doParallel")
 #' @examples
 #' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
 #' 
-#'
+#' @export
 generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL) {
   if(is.null(gwas_p)){
     genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
@@ -120,13 +116,12 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
 
 #' Calculate the epistatic interaction effect between SNP pairs to construct a 
 #' WISH network using a genotype data frame created from genarate.genotype()
-#' @export
+#' @import doParallel
+#' @import RcppEigen
 #' @description A WISH network can be build based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
 #' ASReml and can be used directly in the WISH network construction.
 #' @usage epistatic.correlation(phenotype, genotype, parallel)
-#' @import doParallel
-#' @import RcppEigen
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Only give one phenotype column at a time. Phenotypes
@@ -151,7 +146,7 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
 #' @examples
 #' epistatic.correlation(phenotype,genotype,parallel)
 #' 
-#' 
+#' @export
 epistatic.correlation <- function(phenotype,genotype,parallel=1 ){
   registerDoParallel(parallel)
   snp_matrix <- matrix(NA, nrow=2*(ncol(genotype)),ncol=ncol(genotype))
