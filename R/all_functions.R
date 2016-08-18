@@ -115,7 +115,7 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
-  passing_snps <- which((colSums((genotype == 2 | genotype == 1.5),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major_freq))
+  passing_snps <- which((colSums((genotype == 2),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major_freq))
   genotype <- genotype[,passing_snps]
   snps <- gwas_id[passing_snps]
   return(list(genotype,snps))
