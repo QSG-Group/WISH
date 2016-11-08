@@ -5,7 +5,7 @@
 \title{Calculate the epistatic interaction effect between SNP pairs to construct a 
 WISH network using a genotype data frame created from genarate.genotype()}
 \usage{
-epistatic.correlation(phenotype, genotype, parallel)
+epistatic.correlation(phenotype, genotype, parallel,test,simple)
 }
 \arguments{
 \item{phenotype}{Dataframe with the rows correspinding to the individuals
@@ -21,13 +21,22 @@ same order.}
 
 \item{parallel}{Number of cores to use for parallel execution in the function 
 registerDoParallel()}
+
+\item{test}{True or False value indicating if a test run is being perform.
+If True will calculate the expected time it will take for the full analysis
+based on calculating 100.000 models with the setting chosen}
+
+\item{simple}{True or false value indicating if only a major/major and
+minor/minor directed interaction model are tested (simple=T) or if if 
+interactions on the major/minor minor axis are tested as well, with the 
+best one of the two being selected (simple=F).}
 }
 \value{
 A list of two matrices. The first matrix gives the epistatic
- interaction effects between
-all the SNP-pairs which were in the input (genotype data) and selected with
-the pvalue from the GWAS results. The second matrix are the corresponding
-pvalues of the parameter estimates of the epistatic interactions.
+interaction effects between all the SNP-pairs which were in the input 
+genotype data) and selected with the pvalue from the GWAS results. 
+The second matrix are the corresponding pvalues of the parameter 
+estimates of the epistatic interactions.
 }
 \description{
 A WISH network can be build based on epistatic interaction 
@@ -35,7 +44,7 @@ effects between SNP pairs. Those interaction effects are calculated using
 ASReml and can be used directly in the WISH network construction.
 }
 \examples{
-epistatic.correlation(phenotype,genotype,parallel)
+epistatic.correlation(phenotype,genotype,parallel,test,simple)
 
 }
 \references{

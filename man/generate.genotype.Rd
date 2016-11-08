@@ -4,7 +4,7 @@
 \alias{generate.genotype}
 \title{Import genotype data in the correct format for network construction}
 \usage{
-generate.genotype(ped, tped, gwas_id, pvalue=0.05, id.select=ped[,2],gwas_p=NULL)
+generate.genotype(ped, tped, gwas_id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas_p=NULL,major_freq=0.95)
 }
 \arguments{
 \item{ped}{The ped file (.ped) is an input file from Plink: The PED file is a
@@ -50,7 +50,7 @@ The genotype data frame has a row for each individual and a column
  Missing values are NA coded.
 }
 \description{
-For network construction based on both #' genomic correlations
+For network construction based on both genomic correlations
 as well as epistatic interactions a genotype matrix has to be
 created, consisting of one numeric value per SNP, per individual. This function
 takes Plink output (1,2-coding) to create the genotype matrix which can be used
@@ -60,7 +60,7 @@ to calculate genomic correlations or epistatic interaction effects
 There is so much to be said
 }
 \examples{
-generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select)
+generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select,gwas_p,major_freq)
 
 }
 \references{

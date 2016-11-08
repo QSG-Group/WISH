@@ -2,5 +2,7 @@
 
 export(epistatic.correlation)
 export(generate.genotype)
+export(partial_correlations)
+export(triangular_split)
 import(RcppEigen)
 import(doParallel)
