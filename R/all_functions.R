@@ -373,7 +373,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     epi_pvalue_t[0 < decider_matrix] <- epi_pvalue_t_2[0 < decider_matrix]
     epi_cor_t <- epi_cor_t_1
     epi_cor_t[0 < decider_matrix] <- epi_cor_t_2[0 < decider_matrix]
-    return(list(epi_pvalue_t,epi_cor_t))
+    output <-list(epi_pvalue_t,epi_cor_t)
+    names(output)<-c("Pvalues","Coefficients")
+    return(output)
   }
   else if (test==F && simple==T) {
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
@@ -388,7 +390,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     diag(epi_pvalue_t) <- 1
     epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
     epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
-    return(list(epi_pvalue_t,epi_cor_t))
+    output <-list(epi_pvalue_t,epi_cor_t)
+    names(output)<-c("Pvalues","Coefficients")
+    return(output)
   }
 }
 
