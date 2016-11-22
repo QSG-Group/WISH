@@ -25,8 +25,6 @@ The first 4 columns of a TPED file are the same as a 4-column MAP file.
 Then all genotypes are listed for all individuals for each particular SNP on 
 each line. Again, SNPs are 1,2-coded.}
 
-\item{gwas_id}{A vector of all SNPs in the GWAS}
-
 \item{pvalue}{A value for the cutoff of the SNPs which should be remained 
 in the matrix, based on the pvalue resulting from the GWAS. Default value
 is 0.05}
@@ -35,12 +33,20 @@ is 0.05}
 selected (e.g. extremes). If nothing inserted, all individuals are in the
 output}
 
-\item{gwas_p}{**optional** A vector of the p-values corresponding to 
+\item{gwas.p}{**optional** A vector of the p-values corresponding to 
 the gwas_id vector. If assigned, will select snps based on the pvalue
 parameter with a default value of 0.05.}
 
-\item{major_freq}{Maximum major allele frequency allowed in each variant. 
+\item{major.freq}{Maximum major allele frequency allowed in each variant. 
 Default value is 0.95.}
+
+\item{fast.read}{If true will use fread from the data.table package to read
+the files. This is much faster than read.table, but requires consistent delimeters
+in the ped and tped file, and a maximum of approximately 950.000 colums in the ped
+file. This can be increased by changing the stack size (do this only if you
+know what you are doing)}
+
+\item{gwas.id}{A vector of all SNPs in the GWAS}
 }
 \value{
 A genotype dataframe and the corresponding vector of passing snps in a vector.

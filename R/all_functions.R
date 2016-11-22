@@ -2,6 +2,7 @@
 
 
 #' Import genotype data in the correct format for network construction
+#' @import data.table
 #' @description For network construction based on both genomic correlations
 #' as well as epistatic interactions a genotype matrix has to be
 #' created, consisting of one numeric value per SNP, per individual. This function
@@ -24,18 +25,23 @@
 #' The first 4 columns of a TPED file are the same as a 4-column MAP file.
 #' Then all genotypes are listed for all individuals for each particular SNP on 
 #' each line. Again, SNPs are 1,2-coded.
-#' @param gwas_id  A vector of all SNPs in the GWAS
+#' @param gwas.id  A vector of all SNPs in the GWAS
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
 #' in the matrix, based on the pvalue resulting from the GWAS. Default value
 #' is 0.05
 #' @param id.select If requested, a subset of individuals can be 
 #' selected (e.g. extremes). If nothing inserted, all individuals are in the
 #' output
-#' @param gwas_p **optional** A vector of the p-values corresponding to 
+#' @param gwas.p **optional** A vector of the p-values corresponding to 
 #' the gwas_id vector. If assigned, will select snps based on the pvalue
 #' parameter with a default value of 0.05.
-#' @param major_freq Maximum major allele frequency allowed in each variant. 
-#' Default value is 0.95. 
+#' @param major.freq Maximum major allele frequency allowed in each variant. 
+#' Default value is 0.95.
+#' @param fast.read If true will use fread from the data.table package to read
+#' the files. This is much faster than read.table, but requires consistent delimeters
+#' in the ped and tped file, and a maximum of approximately 950.000 colums in the ped
+#' file. This can be increased by changing the stack size (do this only if you
+#' know what you are doing)
 #' @return A genotype dataframe and the corresponding vector of passing snps in a vector.
 #' The genotype data frame has a row for each individual and a column
 #'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
@@ -54,16 +60,33 @@
 #' 
 #' 
 #' 
-generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=ped[,2],gwas_p=NULL,major_freq=0.95) {
-  if(is.null(gwas_p)){
-    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
+generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) {
+  if (fast.read == T){
+    ped <- fread(ped,data.table=F)
+    tped <- fread(tped,data.table=F)
+  }
+  else {
+    ped <- read.table(ped)
+    tped <- read.table(tped)
+  }
+  if ((dim(ped)[1] != (dim(tped)[2]-4)/2) && ((dim(ped)[2]-6)/2 != (dim(tped)[1]))){
+    stop("Error: ped-file and tped file dimensions do not fit, make sure file delimiters are consistent")
+  } 
+  if(is.null(snp.id)){
+    snp.id <- tped[,2]
+  }
+  if(is.null(id.select)){
+    id.select <- ped[,2]
+  }
+  if(is.null(gwas.p)){
+    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(snp.id)))
     rownames(genotype) <- id.select
-    colnames(genotype) <- gwas_id
-    if (length(c(gwas_id))==length(c(tped[,2]))){
+    colnames(genotype) <- snp.id
+    if (length(c(snp.id))==length(c(tped[,2]))){
       snps <- c(1:dim(tped)[1])
     }
     else {
-      snps<-which(tped[,2]%in%gwas_id)  
+      snps<-which(tped[,2]%in%snp.id)  
     }
     if (length(c(id.select))==length(c(ped[,2]))){
       ids <- c(1:dim(ped)[1])
@@ -78,20 +101,18 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
-  if(!(is.null(gwas_p))){
-    gwas_id <- as.vector(gwas_id)
-    gwas_id <- gwas_id[as.vector(gwas_p) <= pvalue]
-    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(gwas_id)))
+  if(!(is.null(gwas.p))){
+    # In case of p-value filtering we want the input SNP IDs to match the pvalue vector
+    if(length(as.vector(gwas.p))!=length(as.vector(snp.id))){
+      stop("Gwas P-values not same length as SNP IDs")
+    }  
+    snp.id <- as.vector(snp.id)
+    snp.id <- snp.id[as.vector(gwas.p) <= pvalue]
+    genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(snp.id)))
     rownames(genotype) <- id.select
-    colnames(genotype) <- gwas_id
-    if (length(c(gwas_id))==length(c(tped[,2]))){
-      if (length(c(gwas_id))==length(c(tped[,2])))
-      {
-        snps <- c(1:dim(tped)[1])
-      }
-      else {
-        snps<-which(tped[,2]%in%gwas_id)  
-      }
+    colnames(genotype) <- snp.id
+    if (length(c(snp.id))==length(c(tped[,2]))){
+      snps <- c(1:dim(tped)[1])
       if (length(c(id.select))==length(c(ped[,2]))){
         ids <- c(1:dim(ped)[1])
         ped_trim <- ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)]
@@ -100,29 +121,30 @@ generate.genotype <- function(ped,tped,gwas_id=tped[,2],pvalue=0.05,id.select=pe
         ids<-which(ped[,2]%in%id.select) 
         ped_trim <- ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)]
       }
-      snps <- c(1:dim(tped)[1])
     }
     else {
-      snps<-which(tped[,2]%in%gwas_id)  
-    }
-    if (length(c(id.select))==length(c(ped[,2]))){
-      ids <- c(1:dim(ped)[1])
-      ped_trim <- as.matrix(ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)])
-    }
-    else {
-      ids<-which(ped[,2]%in%id.select) 
-      ped_trim <- as.matrix(ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)])
-    }
+      snps<-which(tped[,2]%in%snp.id)  
+      if (length(c(id.select))==length(c(ped[,2]))){
+        ids <- c(1:dim(ped)[1])
+        ped_trim <- as.matrix(ped[ids,c(rep(2*snps,each=2)-(1:(2*length(snps)))%%2+6)])
+      }
+      else {
+        ids<-which(ped[,2]%in%id.select) 
+        ped_trim <- as.matrix(ped[ids,c(sort(rep(2*snps,each=2)-(1:(2*length(snps)))%%2)+6)])
+      }
+    }  
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
   #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
-  passing_snps <- which((colSums((genotype == 2),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major_freq))
+  passing_snps <- which((colSums((genotype == 2),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major.freq))
   genotype <- genotype[,passing_snps]
-  snps <- gwas_id[passing_snps]
-  return(list(genotype,snps))
+  snps <- snp.id[passing_snps]
+  output<-list(genotype,snps)
+  names(output)<-c("genotype","SNPs")
+  return(output)
 }
 
 
@@ -267,17 +289,13 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @export
 
 epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T){
+  genotype <- genotype$genotype
   registerDoParallel(parallel)
   phenotype < as.matrix(phenotype)
   n<-ncol(genotype)
   coords<-triangular_split(n,parallel)
   if(is.data.frame(genotype)){
     genotype[] <- lapply(genotype, as.numeric)
-  }
-  else if (is.matrix(genotype)) {
-  }
-  else {
-    stop("genotype not matrix or dataframe")
   }
   if (simple==F || test==T){
     genotype_rev <- genotype
@@ -339,6 +357,8 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
       subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=2)
       return(subset)
     }
+  }
+    if (test == F && simple==F || (test==T && n <= 315)){
     # Transposing and filling out the correlation and pvalue matrix
     epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]
     epi_pvalue <-   snp_matrix[seq(2,nrow(snp_matrix),2),]
