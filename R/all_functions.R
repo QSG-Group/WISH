@@ -250,6 +250,7 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' Calculate the epistatic interaction effect between SNP pairs to construct a 
 #' WISH network using a genotype data frame created from genarate.genotype()
 #' @import doParallel
+#' @import foreach
 #' @import RcppEigen
 #' @description A WISH network can be build based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
