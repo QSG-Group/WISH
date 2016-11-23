@@ -392,9 +392,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     epi_cor_t[0 < decider_matrix] <- epi_cor_t_2[0 < decider_matrix]
     output <-list(epi_pvalue_t,epi_cor_t)
     colnames(epi_pvalue_t) <- colnames(genotype)
-    rownames(epi_pvalue_t) <- rownames(genotype)
+    rownames(epi_pvalue_t) <- colnames(genotype)
     colnames(epi_cor_t) <- colnames(genotype)
-    rownames(epi_cor_t) <- rownames(genotype)
+    rownames(epi_cor_t) <- colnames(genotype)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
@@ -412,9 +412,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
     epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
     colnames(epi_pvalue_t) <- colnames(genotype)
-    rownames(epi_pvalue_t) <- rownames(genotype)
+    rownames(epi_pvalue_t) <- colnames(genotype)
     colnames(epi_cor_t) <- colnames(genotype)
-    rownames(epi_cor_t) <- rownames(genotype)
+    rownames(epi_cor_t) <- colnames(genotype)
     output <-list(epi_pvalue_t,epi_cor_t)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
