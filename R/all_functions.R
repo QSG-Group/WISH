@@ -391,6 +391,10 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     epi_cor_t <- epi_cor_t_1
     epi_cor_t[0 < decider_matrix] <- epi_cor_t_2[0 < decider_matrix]
     output <-list(epi_pvalue_t,epi_cor_t)
+    colnames(epi_pvalue_t) <- colnames(genotype)
+    rownames(epi_pvalue_t) <- rownames(genotype)
+    colnames(epi_cor_t) <- colnames(genotype)
+    rownames(epi_cor_t) <- rownames(genotype)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
