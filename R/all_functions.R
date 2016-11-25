@@ -62,11 +62,15 @@
 #' 
 generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) {
   if (fast.read == T){
+    message("loading ped file")
     ped <- fread(ped,data.table=F)
+    message("loading tped file")
     tped <- fread(tped,data.table=F)
   }
   else {
+    message("loading ped file")
     ped <- read.table(ped)
+    message("loading tped file")
     tped <- read.table(tped)
   }
   if ((dim(ped)[1] != (dim(tped)[2]-4)/2) && ((dim(ped)[2]-6)/2 != (dim(tped)[1]))){
@@ -107,7 +111,11 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
       stop("Gwas P-values not same length as SNP IDs")
     }  
     snp.id <- as.vector(snp.id)
-    snp.id <- snp.id[as.vector(gwas.p) <= pvalue]
+    original_length<-length(snp.id)
+    snp.id <- snp.id[as.vector(gwas.p) <= pvalue & !(is.na(as.vector(gwas.p)))]
+    new_length<-length(snp.id) 
+    snp_counts<-paste(as.character(new_length),as.character(original_length), sep = "/") 
+    message(paste(snp_counts, "passed P-value threshold"), sep=" ")
     genotype <- matrix(nrow=length(c(id.select)),ncol=length(c(snp.id)))
     rownames(genotype) <- id.select
     colnames(genotype) <- snp.id
@@ -135,6 +143,7 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
     }  
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
+      
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
@@ -143,6 +152,7 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
   genotype <- genotype[,passing_snps]
   return(genotype)
 }
+
 
 
 
@@ -330,7 +340,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     model_time <- round(model_time,digits = 2)
     model_time<-as.character(model_time)
     estimate<-paste(paste("The estimated run time for the full model is",model_time),"hours",sep=" ")
-   message(estimate)
+    message(estimate)
   }
   else if (test==T && n <= 315){
     message("Data size too small for testing, running normal analysis")
@@ -355,7 +365,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
       return(subset)
     }
   }
-    if (test == F && simple==F || (test==T && n <= 315)){
+  if (test == F && simple==F || (test==T && n <= 315)){
     # Transposing and filling out the correlation and pvalue matrix
     epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]
     epi_pvalue <-   snp_matrix[seq(2,nrow(snp_matrix),2),]
@@ -390,11 +400,11 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     epi_pvalue_t[0 < decider_matrix] <- epi_pvalue_t_2[0 < decider_matrix]
     epi_cor_t <- epi_cor_t_1
     epi_cor_t[0 < decider_matrix] <- epi_cor_t_2[0 < decider_matrix]
-    output <-list(epi_pvalue_t,epi_cor_t)
     colnames(epi_pvalue_t) <- colnames(genotype)
     rownames(epi_pvalue_t) <- colnames(genotype)
     colnames(epi_cor_t) <- colnames(genotype)
     rownames(epi_cor_t) <- colnames(genotype)
+    output <-list(epi_pvalue_t,epi_cor_t)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
