@@ -2,9 +2,11 @@
 
 export(epistatic.correlation)
 export(generate.genotype)
+export(genome.correlation.map)
 export(partial_correlations)
 export(triangular_split)
 import(RcppEigen)
+import(corrplot)
 import(data.table)
 import(doParallel)
 import(foreach)

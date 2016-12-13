@@ -259,9 +259,9 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @import doParallel
 #' @import foreach
 #' @import RcppEigen
-#' @description A WISH network can be build based on epistatic interaction 
+#' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
-#' ASReml and can be used directly in the WISH network construction.
+#' linear models. 
 #' @usage epistatic.correlation(phenotype, genotype, parallel,test,simple)
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
@@ -430,5 +430,70 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     return(output)
   }
 }
+#' Visualization of pairwise chromosome epistatic interactions on a genome wide level
+#' @description Visualization of the genome wide chromosome pairwise relative strength
+#' of epistatic interaction, ranging from 1 (strongest) to -1 (weakest).
+#' The strength is based on the 90th percentile quantile (default) of stastistical
+#' significance of epistatic interaction between all interactions in each
+#' chromosome pair, scaled to 1 to -1. 
+#' @import corrplot
+#' @usage epistatic.correlation(tped,correlations)
+#' @param tped The tped file used in generate.genotype(). The SNPs must
+#' be sorted by chromosome. 
+#' @param correlations List of epistatic correlations and p-values genrated by
+#' epistatic.correlation()
+#' @param quantile Number from 0 to 1 indicating which quantile to base the
+#' visualization on. 
+#' @return Outputs a plot visualizing the chromosome interaction map
+#' @examples
+#'  genome.correlation.map(tped,correlations)
+#' 
+#' @export
 
+
+genome.correlation.map <- function(tped,correlations,quantile=0.9) {
+  new_P <- (1-correlations$Pvalues)
+  message("loading tped file")
+  tped <- fread(tped,data.table=F)
+  map<-tped[tped[,2] %in% rownames(correlations$Pvalues),1:2]
+  counter = 0
+  ends <- c()
+  chr_list <- c()
+  for (i in map[,1]){
+    if (counter == 0){
+      counter <- counter + 1
+      starts <- 1
+      chr <- i
+      chr_list <- c(chr_list,chr)
+    }
+    else {
+      if (chr == i){
+        counter <- counter + 1 
+        if (counter == dim(map)[1]){
+          ends <- c(ends,counter)
+        }
+      }
+      if (chr != i){
+        chr <- i
+        chr_list <- c(chr_list,chr)
+        ends <- c(ends,counter)
+        counter <- counter + 1 
+        starts <- c(starts,counter)
+      }
+    }
+  }
+  coord_splits<-cbind(starts,ends)
+  visualization_matrix <- matrix(nrow = length(starts),ncol = length(starts))
+  colnames(visualization_matrix) <- chr_list
+  rownames(visualization_matrix) <- chr_list
+  for (i in 1:length(starts)){
+    for (j in 1:length(starts)){
+      subset <- c(new_P[coord_splits[i,1]:coord_splits[i,2],coord_splits[j,1]:coord_splits[j,2]])
+      subset <- abs(subset)
+      visualization_matrix[i,j] <- quantile(subset,quantile)
+    }
+  }
+  visualization_matrix <- 2*(visualization_matrix-min(visualization_matrix))/(max(visualization_matrix)-min(visualization_matrix))-1
+  corrplot(visualization_matrix, type="upper",title= "Pairwise Chromosome Interaction Map",mar=c(0,0,2,0))
+}
 

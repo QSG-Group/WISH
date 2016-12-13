@@ -39,9 +39,9 @@ The second matrix are the corresponding pvalues of the parameter
 estimates of the epistatic interactions.
 }
 \description{
-A WISH network can be build based on epistatic interaction 
+A WISH network can be built based on epistatic interaction 
 effects between SNP pairs. Those interaction effects are calculated using
-ASReml and can be used directly in the WISH network construction.
+linear models.
 }
 \examples{
 epistatic.correlation(phenotype,genotype,parallel,test,simple)
