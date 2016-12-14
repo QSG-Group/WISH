@@ -437,21 +437,22 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
 #' significance of epistatic interaction between all interactions in each
 #' chromosome pair, scaled to 1 to -1. 
 #' @import corrplot
-#' @usage epistatic.correlation(tped,correlations)
+#' @usage genome.interaction(tped,correlations)
 #' @param tped The tped file used in generate.genotype(). The SNPs must
-#' be sorted by chromosome. 
+#' be sorted by chromosome, matching the order of the SNPs in the correlation 
+#' matrices. 
 #' @param correlations List of epistatic correlations and p-values genrated by
 #' epistatic.correlation()
 #' @param quantile Number from 0 to 1 indicating which quantile to base the
 #' visualization on. 
 #' @return Outputs a plot visualizing the chromosome interaction map
 #' @examples
-#'  genome.correlation.map(tped,correlations)
+#'  genome.interaction(tped,correlations)
 #' 
 #' @export
 
 
-genome.correlation.map <- function(tped,correlations,quantile=0.9) {
+genome.interaction <- function(tped,correlations,quantile=0.9) {
   new_P <- (1-correlations$Pvalues)
   message("loading tped file")
   tped <- fread(tped,data.table=F)
@@ -497,3 +498,188 @@ genome.correlation.map <- function(tped,correlations,quantile=0.9) {
   corrplot(visualization_matrix, type="upper",title= "Pairwise Chromosome Interaction Map",mar=c(0,0,2,0))
 }
 
+
+#' Visualization of chromosome pairwise region epistatic interaction strength, based on 
+#' statistical significance 
+#' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
+#' statistical significance. The value is based of the most signficant epistatic interaction in each
+#' region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
+#' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+#' the data.  
+#' @import heatmap3
+#' @usage pairwise.chr.map(chr1,chr2,tped,correlations)
+#' @param chr1 The name of the first chromosome in the comparison, matching the name
+#' from the tped file
+#' @param chr2 The name of the second chromosome in the comparison, matching the name
+#' from the tped file
+#' @param tped The tped file used in generate.genotype(). The SNPs must
+#' be sorted by chromosome and position on the chromosome, matching the order of the SNPs in the correlation 
+#' matrices. 
+#' @param span Region in bp. Default is 1 Mb (10^6)
+#' @param correlations List of epistatic correlations and p-values genrated by
+#' epistatic.correlation()
+#' @return Outputs a plot visualizing the pairwise chromosome region interaction
+#' @examples
+#'  pairwise.chr.map("1","2",tped,correlations)
+#' 
+#' @export
+
+
+pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {  
+  new_P <- (1-correlations$Pvalues)
+  message("loading tped file")
+  tped <- fread(tped,data.table=F)
+  total_map <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,4)]
+  total_map[,2] <- as.numeric(total_map[,2])
+  map <-total_map[total_map[,1] == chr1,]
+  first_snp <- map[1,2]
+  last_snp <- map[dim(map)[1],2]
+  #size <- round((last_snp-first_snp)/span,digits=0)
+  progress <- 1
+  ends <- c()
+  for (snp in map[,2]){   
+    if ( snp < (first_snp+progress*span)) {
+      starts <- 1
+      row <- 1
+    }
+    else {
+      while (snp > first_snp+(progress+1)*span) {
+        progress <- progress +1
+      }
+      print("what")
+      ends <- c(ends,row)
+      row <- row +1
+      starts <- c(starts,row)
+      progress <- progress + 1
+    }
+  }
+  ends<- c(ends,dim(map)[1])
+  chromosome_choords1 <- cbind(starts,ends)
+  chromosome_choords1 <- chromosome_choords1 + which(total_map[,1] == chr1)[1]-1
+  map <-total_map[total_map[,1] == chr2,]
+  first_snp <- map[1,2]
+  last_snp <- map[dim(map)[1],2]
+  #size <- round((last_snp-first_snp)/10^6,digits=0)
+  progress <- 1
+  ends <- c()
+  for (snp in map[,2]){   
+    if ( snp < (first_snp+progress*10^6)) {
+      print("!t")
+      starts <- 1
+      row <- 1
+    }
+    else {
+      while (snp > first_snp+(progress+1)*10^6) {
+        progress <- progress +1
+      }
+      print("what")
+      ends <- c(ends,row)
+      row <- row +1
+      starts <- c(starts,row)
+      progress <- progress + 1
+    }
+  }
+  ends<- c(ends,dim(map)[1])
+  chromosome_choords2 <- cbind(starts,ends)
+  chromosome_choords2 <- chromosome_choords2 + which(total_map[,1] == chr2)[1]-1
+  visualization_matrix <- matrix(nrow = dim(chromosome_choords1)[1],ncol = dim(chromosome_choords2)[1])
+  colnames(visualization_matrix) <- 1:(dim(chromosome_choords2)[1])
+  rownames(visualization_matrix) <- 1:(dim(chromosome_choords1)[1]) 
+  for (i in 1:dim(chromosome_choords1)[1]){
+    for (j in 1:dim(chromosome_choords2)[1]){
+      subset <- c(new_P[chromosome_choords1[i,1]:chromosome_choords1[i,2],chromosome_choords2[j,1]:chromosome_choords2[j,2]])
+      subset <- abs(subset)
+      visualization_matrix[i,j] <- max(subset)
+      
+    }
+  }
+  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(dim(chromosome_choords2)[1]))
+  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(dim(chromosome_choords1)[1]))
+  heatmap3(visualization_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(chromosome_choords1)[1]-2),"end"),labCol=c("start",rep("",dim(chromosome_choords2)[1]-2),"end"))
+}
+
+
+#' Visualization of chromosome pairwise region epistatic interaction strength, based on 
+#' statistical significance 
+#' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
+#' statistical significance. The value is based of the most signficant epistatic interaction in each
+#' region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
+#' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+#' the data.  
+#' @import WGCNA
+#' @import flashClust
+#' @usage generate.modules(correlations)
+#' @param correlations List of epistatic correlations and p-values genrated by
+#' epistatic.correlation()
+#' @param power Powers to test for creating scale free network. Only change if the default
+#' values don't work
+#' @param n.snps Number of SNPs to select. SNPs are selected by connectivity, so 500 will
+#' select the top 500 most connected Snps. Default is to use all
+#' @param minClusterSize Minimum module (cluster) size. Default, is 50, but changing this may
+#' be recommended in case of sparse SNPs  
+#' @param type Type of network to generate. Default is "unsigned", can be "signed" or "signed hybrid"
+#' @param threads Number of threads to use if parallelization is possible.
+#' @return Plots the network connectivity and the scale and SNP tree clustering with modules found. 
+#' Returns a named list with all the data generated:
+#' \itemize{
+#'  \item{"SNPs"}{SNPs used in the analysis and their correlations}
+#'  \item{"connectivity"}{The connectivity matrix of the SNPs}
+#'  \item{"adjMat"}{The adjacency matrix of the SNPs}
+#'  \item{"dissTom"}{The dissimilarity TOM}
+#'  \item{"genetree"}{The clustering object used for the genetree}
+#'  \item{"modules"}{The module numbers for each SNP, in order of the SNP matrix}
+#'  \item{"modulcolors"}{The colors used in the modules for each SNP}
+#'  \item{"power.estimate"}{The power estimate to generate a scale free network}
+#' }
+#' @examples
+#'  generate.modules(correlations)
+#' 
+#' @export
+
+
+generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=1) {
+  enableWGCNAThreads(threads)
+  if (values=="Pvalue"){
+    corr <- (1-correlations$Pvalues)*(correlations$Coefficients/abs(correlations$Coefficients))
+  }
+  if (values=="Coefficient"){
+    temp_corr<-correlations$Coefficients
+    temp_corr[temp_corr < 0] <- 0
+    temp_corr <- temp_corr/(max(temp_corr))
+    corr <- temp_corr
+    temp_corr <- correlations$Coefficients
+    temp_corr[temp_corr > 0] <- 0
+    temp_corr <- temp_corr/(abs(min(temp_corr)))
+    corr[temp_corr < 0] <- temp_corr[temp_corr < 0]
+  }
+  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:22)), verbose = 5)
+  connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
+  sizeGrWindow(10,5)
+  par(mfrow=c(1,2))
+  hist(connectivity,xlab="connectivity")
+  scaleFreePlot(connectivity)
+  par(mfrow=c(1,1))
+  #select SNPs for network construction based on connectivity
+  select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
+  select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
+  #create adjacency matrix (correlation matrix raised to power beta)
+  adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
+  #calculate dissimilarity TOM
+  dissTOM <- 1-(TOMsimilarity(adjMat))
+  #create gene dendrogram based on diss TOM
+  genetree <- flashClust(as.dist(dissTOM), method="average")
+  #cut branches of the tree= modules
+  dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
+                              deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
+  #give modules a color as name
+  moduleColors = labels2colors(dynamicMods)
+  #sizeGrWindow(8,6)
+  #plot dendrogram with the module colors
+  plotDendroAndColors(genetree, moduleColors,
+                      dendroLabels=F, hang=0.03,
+                      addGuide=T, guideHang = 0.05,
+                      main="Gene dendrogram and modules")
+  output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
+  names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
+  return(output)
+}
