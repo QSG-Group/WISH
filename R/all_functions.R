@@ -8,7 +8,7 @@
 #' created, consisting of one numeric value per SNP, per individual. This function
 #' takes Plink output (1,2-coding) to create the genotype matrix which can be used
 #' to calculate genomic correlations or epistatic interaction effects 
-#' @usage generate.genotype(ped, tped, gwas_id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas_p=NULL,major_freq=0.95)
+#' @usage generate.genotype(ped, tped, gwas.id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas.p=NULL,major.freq=0.95)
 #' @param ped The ped file (.ped) is an input file from Plink: The PED file is a
 #' white-space (space or tab) delimited file: the first six columns are mandatory:
 #' Family ID, Idividual ID, Paternal ID, Maternal ID, 
@@ -54,7 +54,7 @@
 #' BMC Systems Biology 8(Suppl 2):S5. 
 #' http://www.biomedcentral.com/1752-0509/8/S2/S5.
 #' @examples
-#' generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select,gwas_p,major_freq)
+#' generate.genotype(ped,tped)
 #' 
 #' @export
 #' 

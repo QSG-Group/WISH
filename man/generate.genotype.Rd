@@ -4,7 +4,7 @@
 \alias{generate.genotype}
 \title{Import genotype data in the correct format for network construction}
 \usage{
-generate.genotype(ped, tped, gwas_id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas_p=NULL,major_freq=0.95)
+generate.genotype(ped, tped, gwas.id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas.p=NULL,major.freq=0.95)
 }
 \arguments{
 \item{ped}{The ped file (.ped) is an input file from Plink: The PED file is a
@@ -66,7 +66,7 @@ to calculate genomic correlations or epistatic interaction effects
 There is so much to be said
 }
 \examples{
-generate.genotype(ped, tped, gwas_id, gwas_p, pvalue, id.select,gwas_p,major_freq)
+generate.genotype(ped,tped)
 
 }
 \references{
