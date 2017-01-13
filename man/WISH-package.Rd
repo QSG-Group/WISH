@@ -6,7 +6,7 @@
 \packageTitle{WISH}
 }
 \description{
-The Weighted Interaction SNP Hub network method uses high-throughput genotype data to detect genome-wide interactions between SNPs and its relation with complex traits. Data dimensionality reduction is achieved by selecting SNPs based on its degree of genome-wide significance and degree of genetic variation in a population. Network construction is based on pairwise Pearson's correlation between SNP genotypes or the epistatic interaction effect between SNP pairs. To identify modules the Topological Overlap Measure is calculated, reflecting the degree of overlap in shared neighbours between SNP pairs. Modules, clusters of highly interconnected SNPs, are defined using a tree-cutting algorithm on the SNP dendrogram created from the dissimilarity TOM. Modules are selected for functional annotation based on their association with the trait of interest, defined by the Genome-wide Module Association Test.
+The Weighted Interaction SNP Hub network method uses high-throughput genotype data to detect genome-wide interactions between SNPs and its relation with complex traits. Data dimensionality reduction is achieved by selecting SNPs based on its degree of genome-wide significance and degree of genetic variation in a population. Network construction is based on the epistatic interaction effect between SNP pairs. To identify modules the Topological Overlap Measure is calculated, reflecting the degree of overlap in shared neighbours between SNP pairs. Modules, clusters of highly interconnected SNPs, are defined using a tree-cutting algorithm on the SNP dendrogram created from the dissimilarity TOM.
 }
 \author{
 Victor A.O Caremlo, Lisette Kogelamn and Haja Kadarmideen

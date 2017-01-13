@@ -12,6 +12,8 @@ library("devtools")
 
 install_github("AQS-Group/WISH")
 
+For the manual see the WISH.pdf file
+
 # References
 
 Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
