@@ -1,6 +1,6 @@
 Package: WISH
 Type: Package
-Title: Network construction of whole genome genotype data using the WISH network method
+Title: WISH
 Version: 1.0
 Imports: doParallel, foreach, RcppEigen, data.table, corrplot, heatmap3, WGCNA, flashClust
 Date: 2016-05-10
