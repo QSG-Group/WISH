@@ -6,24 +6,19 @@
 \packageTitle{WISH}
 }
 \description{
-\packageDescription{WISH}
-}
-\details{
-
-The DESCRIPTION file:
-\packageDESCRIPTION{WISH}
-\packageIndices{WISH}
- An overview of how to use the package, including the most important functions 
+The Weighted Interaction SNP Hub network method uses high-throughput genotype data to detect genome-wide interactions between SNPs and its relation with complex traits. Data dimensionality reduction is achieved by selecting SNPs based on its degree of genome-wide significance and degree of genetic variation in a population. Network construction is based on pairwise Pearson's correlation between SNP genotypes or the epistatic interaction effect between SNP pairs. To identify modules the Topological Overlap Measure is calculated, reflecting the degree of overlap in shared neighbours between SNP pairs. Modules, clusters of highly interconnected SNPs, are defined using a tree-cutting algorithm on the SNP dendrogram created from the dissimilarity TOM. Modules are selected for functional annotation based on their association with the trait of interest, defined by the Genome-wide Module Association Test.
 }
 \author{
-\packageAuthor{WISH}
-
-Maintainer: \packageMaintainer{WISH}
+Victor A.O Caremlo, Lisette Kogelamn and Haja Kadarmideen
+Maintainer: hajak@sund.ku.dk
 }
 \references{
- Literature or other references for background information 
- Optionally other standard keywords, one per line, from file KEYWORDS in the R documentation directory 
-}
+ Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
+Weighted Interaction SNP Hub (WISH) network method for building genetic 
+Networks for complex diseases and traits using whole genome genotype data. 
+BMC Systems Biology 8(Suppl 2):S5.  
+http://www.biomedcentral.com/1752-0509/8/S2/S5.
+ }
 
 \keyword{ package }
 \seealso{
