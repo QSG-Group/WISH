@@ -20,7 +20,3 @@ BMC Systems Biology 8(Suppl 2):S5.
 http://www.biomedcentral.com/1752-0509/8/S2/S5.
  }
 
-\keyword{ package }
-\seealso{
- Optional links to other man pages, e.g. 
-}
