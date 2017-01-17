@@ -32,9 +32,9 @@
 #' @param id.select If requested, a subset of individuals can be 
 #' selected (e.g. extremes). If nothing inserted, all individuals are in the
 #' output
-#' @param gwas.p **optional** A vector of the p-values corresponding to 
-#' the gwas_id vector. If assigned, will select snps based on the pvalue
-#' parameter with a default value of 0.05.
+#' @param gwas.p  A vector of the p-values corresponding to 
+#' the input SNPs in the ped/tped file or gwas.id vector. If assigned, will 
+#' select snps based on the pvalue parameter with a default value of 0.05.
 #' @param major.freq Maximum major allele frequency allowed in each variant. 
 #' Default value is 0.95.
 #' @param fast.read If true will use fread from the data.table package to read
@@ -266,7 +266,8 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Only give one phenotype column at a time. Phenotypes
-#' should be continous variables. Make sure that the dataframe contains the same
+#' should be non-categorical continous or discrete/semi-discrete variables. 
+#' Make sure that the dataframe contains the same
 #' individuals as in the genotype-file, and that those are in the same order.
 #' @param genotype Dataframe with the genotype information, resulting from 
 #' the function generate.genotype(). Make sure that the dataframe contains the 
