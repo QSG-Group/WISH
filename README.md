@@ -40,8 +40,7 @@ with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and mor
 with strong computing facilities.
 
 
-#' \code{genotype <-generate.genotype(\<input ped file path\>,\<input tped file path\>,gwas.id=<selected list of id>,gwas.p=\<p-values of input SNPs\>)}
-
+genotype <-generate.genotype(\<input ped file path\>,\<input tped file path\>,gwas.id=<selected list of id>,gwas.p=\<p-values of input SNPs\>)
 
 ***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading
 signifacntly.  You can also increase your stacklimit using ulimit -s 16384 to allow files up to about 2 million markers,
