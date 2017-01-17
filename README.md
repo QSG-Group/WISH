@@ -75,6 +75,13 @@ coefficients between 1000 and -1000:
 correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coefficients < -1000] <-0
 ```
 The range of desired values is individual depending on the properties of each dataset.
+
+# Contact
+Victor A. O Carmelo, vaoc@sund.ku.dk
+Faculty of Health and Medical Sciences
+Department of Veterinary and Animal Sciences
+Animal Breeding, Quantitative Genetics & Systems Biology Group
+
 # References
 
 Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
