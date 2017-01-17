@@ -39,15 +39,14 @@ details on filtering. We would recomend to somewhat maximise the number of inter
 with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and more is possible
 with strong computing facilities.
 
-
+´´´
 genotype <-generate.genotype(\<input ped file path\>,\<input tped file path\>,gwas.id=<selected list of id>,gwas.p=\<p-values of input SNPs\>)
+´´´
 
-***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading
-signifacntly.  You can also increase your stacklimit using ulimit -s 16384 to allow files up to about 2 million markers,
-but do this only if you know what you are doing. 
+***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading time significantly.  You can also increase your stacklimit using ulimit -s 16384 to allow files up to about 2 million markers,but do this only if you know what you are doing. 
 
 After generating the genotypes file it is recomended to run a test run to estimate run time
-of the interactions based on available computing setup:
+of the epistatic interaction calculation based on available computing setup:
 
 epistatic.correlation(\<phenotype dataframe\>, genotype,parallel = \<number of cores available\> ,test=T)
 
