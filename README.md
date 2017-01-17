@@ -41,38 +41,38 @@ with strong computing facilities.
 
 
 ```
-genotype <-generate.genotype(\<input ped file path\>,\<input tped file path\>,gwas.id=<selected list of id>,gwas.p=\<p-values of input SNPs\>)
+genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
 ```
 
 ***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading time significantly.  You can also increase your stacklimit using ulimit -s 16384 to allow files up to about 2 million markers,but do this only if you know what you are doing. 
 
 After generating the genotypes file it is recomended to run a test run to estimate run time
 of the epistatic interaction calculation based on available computing setup:
-
-epistatic.correlation(\<phenotype dataframe\>, genotype,parallel = \<number of cores available\> ,test=T)
-
+```
+epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=T)
+```
 This will give you a indication of expected run time given your input. The next step is to run the analysis:
 We recommend using simple=F for better results:
-
-correlations<-epistatic.correlation(\<phenotype dataframe\>, genotype,parallel = \<number of cores available\> ,test=F,simple=F)
-
+```
+correlations<-epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=F,simple=F)
+```
 Once you have calculated epistatic correlations you can get a course grained overview of the results using
 the genome.interaction() function:
-
-genome.interaction(\<input tped file\>, correlations)
-
+```
+genome.interaction(<input tped file>, correlations)
+```
 If you want to compare individual chromosomes see the pairwise.chr.map() function
 
 Finally to create modules of interacting markers use the generate.modules function:
-
+```
 modules <-generate.modules(correlations)
-
+```
 ***warning*** If you have epistatic correlatoin coefficients values that are strong outliers this can heavily affect
 this step or even make it fail. Thus it is recommended to set those coefficients to 0, for example if we only want 
 coefficients between 1000 and -1000:
-
+```
 correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coefficients < -1000] <-0
-
+```
 The range of desired values is individual depending on the properties of each dataset.
 # References
 
