@@ -8,7 +8,7 @@
 #' created, consisting of one numeric value per SNP, per individual. This function
 #' takes Plink output (1,2-coding) to create the genotype matrix which can be used
 #' to calculate genomic correlations or epistatic interaction effects 
-#' @usage generate.genotype(ped, tped, gwas.id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas.p=NULL,major.freq=0.95)
+#' @usage generate.genotype(ped, tped,gwas.p=gwas_pvalues)
 #' @param ped The ped file (.ped) is an input file from Plink: The PED file is a
 #' white-space (space or tab) delimited file: the first six columns are mandatory:
 #' Family ID, Idividual ID, Paternal ID, Maternal ID, 
@@ -47,7 +47,6 @@
 #'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
 #'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
 #'  Missing values are NA coded. 
-#' @details There is so much to be said
 #' @references Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
 #' Weighted Interaction SNP Hub (WISH) network method for building genetic
 #' networks for complex diseases and traits using whole genome genotype data.
