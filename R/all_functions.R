@@ -25,7 +25,7 @@
 #' The first 4 columns of a TPED file are the same as a 4-column MAP file.
 #' Then all genotypes are listed for all individuals for each particular SNP on 
 #' each line. Again, SNPs are 1,2-coded.
-#' @param snp.id  Input SNP ids to use in analysis
+#' @param snp.id  Input SNP ids to use in analysis if not all snps are to be used
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
 #' in the matrix, based on the pvalue resulting from the GWAS. Default value
 #' is 0.05
