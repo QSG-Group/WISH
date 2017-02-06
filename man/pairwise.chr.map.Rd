@@ -37,4 +37,3 @@ the data.
  pairwise.chr.map("1","2",tped,correlations)
 
 }
-

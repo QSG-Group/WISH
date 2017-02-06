@@ -31,4 +31,3 @@ chromosome pair, scaled to 1 to -1.
  genome.interaction(tped,correlations)
 
 }
-

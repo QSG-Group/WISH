@@ -36,4 +36,3 @@ in sub-matrices
 partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model)
 
 }
-

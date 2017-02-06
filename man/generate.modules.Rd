@@ -48,4 +48,3 @@ and outputs the module components and analysis parameters.
  generate.modules(correlations)
 
 }
-

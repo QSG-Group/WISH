@@ -26,4 +26,3 @@ approximately equal parts
 triangular_split(1000,5)
 
 }
-
