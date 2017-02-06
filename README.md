@@ -7,7 +7,7 @@ Weighted Interaction SNP Hub R Package
 Install WISH with the following commands:
 
 ```
-install("devtools")
+install.packages(c("devtools","curl", "httr"))
 
 library("devtools")
 
