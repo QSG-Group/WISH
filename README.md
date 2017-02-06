@@ -8,8 +8,10 @@ Install WISH with the following commands:
 
 ```
 install.packages(c("devtools","curl", "httr"))
-
 library("devtools")
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("GO.db")
 
 install_github("AQS-Group/WISH")
 ```
