@@ -2,7 +2,7 @@
 % Please edit documentation in R/all_functions.R
 \name{triangular_split}
 \alias{triangular_split}
-\title{This function calculates the row coordinates for splitting triangular sub
+\title{***Internal Use Function*** This function calculates the row coordinates for splitting triangular sub
 matrices of quadratic matrices into approximately equally sized partitions
 for use in in dividing correlation calculations into equal size for 
 parallelization}

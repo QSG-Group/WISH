@@ -4,7 +4,7 @@
 \alias{generate.genotype}
 \title{Import genotype data in the correct format for network construction}
 \usage{
-generate.genotype(ped, tped, gwas.id=tped[,2], pvalue=0.05, id.select=ped[,2],gwas.p=NULL,major.freq=0.95)
+generate.genotype(ped, tped,gwas.p=gwas_pvalues)
 }
 \arguments{
 \item{ped}{The ped file (.ped) is an input file from Plink: The PED file is a
@@ -25,6 +25,8 @@ The first 4 columns of a TPED file are the same as a 4-column MAP file.
 Then all genotypes are listed for all individuals for each particular SNP on 
 each line. Again, SNPs are 1,2-coded.}
 
+\item{snp.id}{Input SNP ids to use in analysis if not all snps are to be used}
+
 \item{pvalue}{A value for the cutoff of the SNPs which should be remained 
 in the matrix, based on the pvalue resulting from the GWAS. Default value
 is 0.05}
@@ -33,9 +35,9 @@ is 0.05}
 selected (e.g. extremes). If nothing inserted, all individuals are in the
 output}
 
-\item{gwas.p}{**optional** A vector of the p-values corresponding to 
-the gwas_id vector. If assigned, will select snps based on the pvalue
-parameter with a default value of 0.05.}
+\item{gwas.p}{A vector of the p-values corresponding to 
+the input SNPs in the ped/tped file or gwas.id vector. If assigned, will 
+select snps based on the pvalue parameter with a default value of 0.05.}
 
 \item{major.freq}{Maximum major allele frequency allowed in each variant. 
 Default value is 0.95.}
@@ -45,8 +47,6 @@ the files. This is much faster than read.table, but requires consistent delimete
 in the ped and tped file, and a maximum of approximately 950.000 colums in the ped
 file. This can be increased by changing the stack size (do this only if you
 know what you are doing)}
-
-\item{gwas.id}{A vector of all SNPs in the GWAS}
 }
 \value{
 A genotype dataframe and the corresponding vector of passing snps in a vector.
@@ -61,9 +61,6 @@ as well as epistatic interactions a genotype matrix has to be
 created, consisting of one numeric value per SNP, per individual. This function
 takes Plink output (1,2-coding) to create the genotype matrix which can be used
 to calculate genomic correlations or epistatic interaction effects
-}
-\details{
-There is so much to be said
 }
 \examples{
 generate.genotype(ped,tped)

@@ -11,7 +11,8 @@ epistatic.correlation(phenotype, genotype, parallel,test,simple)
 \item{phenotype}{Dataframe with the rows correspinding to the individuals
 in the analysis,and columns for the different measured phenotypes and 
 fixed/random factors. Only give one phenotype column at a time. Phenotypes
-should be continous variables. Make sure that the dataframe contains the same
+should be non-categorical continous or discrete/semi-discrete variables. 
+Make sure that the dataframe contains the same
 individuals as in the genotype-file, and that those are in the same order.}
 
 \item{genotype}{Dataframe with the genotype information, resulting from 

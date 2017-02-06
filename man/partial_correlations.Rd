@@ -2,8 +2,8 @@
 % Please edit documentation in R/all_functions.R
 \name{partial_correlations}
 \alias{partial_correlations}
-\title{This function calculates the epistatic correlations in a subset of 
-a matrix space based on coordiantes}
+\title{***Internal Use Function*** This function calculates the epistatic correlations
+in a subset of a matrix space based on coordiantes}
 \usage{
 partial_correlations(genotype,genotype_rev,phenotype,coords,model)
 }
@@ -29,7 +29,7 @@ Epsitatic correlations and P-values for the selected set or subset
 of the data
 }
 \description{
-Internal function for calculating epsitatic correlations
+Internal package function for calculating epsitatic correlations
 in sub-matrices
 }
 \examples{
