@@ -257,7 +257,6 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' WISH network using a genotype data frame created from genarate.genotype()
 #' @import doParallel
 #' @import foreach
-#' @import Rcpp
 #' @import RcppEigen
 #' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
