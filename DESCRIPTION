@@ -2,7 +2,7 @@ Package: WISH
 Type: Package
 Title: WISH
 Version: 1.0
-Imports: doParallel, foreach,fastcluster,matrixStats, iterators, dynamicTreeCut, Hmisc, Rcpp, RcppEigen, data.table, corrplot, heatmap3, WGCNA, flashClust
+Imports: doParallel, foreach,fastcluster,matrixStats, Formula, iterators, dynamicTreeCut, Hmisc, Rcpp, RcppEigen, data.table, corrplot, heatmap3, WGCNA, flashClust
 Date: 2016-05-10
 Author: Victor A.O. Carmelo, Lisette Kogelman, Haja Kadarmideen
 Maintainer: Haja Kadarmideen <hajak@sund.ku.dk>
