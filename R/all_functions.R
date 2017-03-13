@@ -559,7 +559,6 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
   map <-total_map[total_map[,1] == chr2,]
   first_snp <- map[1,2]
   last_snp <- map[dim(map)[1],2]
-  #size <- round((last_snp-first_snp)/10^6,digits=0)
   progress <- 1
   ends <- c()
   for (snp in map[,2]){   
