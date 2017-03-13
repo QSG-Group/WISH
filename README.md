@@ -22,9 +22,8 @@ install_github("AQS-Group/WISH")
 For the reference manual see the WISH.pdf file
 
 # Quick Start
-
 For using WISH you need to have your genotype data in the plink format.
-See here for information:
+See here for information on the plink data format:
 
 http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml#ped
 
