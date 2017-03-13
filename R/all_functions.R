@@ -253,8 +253,8 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 }
 
 
-#' Calculate the epistatic interaction effect between SNP pairs to construct a 
-#' WISH network using a genotype data frame created from genarate.genotype()
+#' Calculate the epistatic interaction effect between SNP pairs  using a genotype 
+#' data frame created from genarate.genotype()
 #' @import doParallel
 #' @import foreach
 #' @import RcppEigen
@@ -499,7 +499,7 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 }
 
 
-#' Visualization of chromosome pairwise region epistatic interaction strength, based on 
+#' Visualization of chromosomal pairwise region epistatic interaction strength, based on 
 #' statistical significance 
 #' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
 #' statistical significance. The value is based of the most signficant epistatic interaction in each

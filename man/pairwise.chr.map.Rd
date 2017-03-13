@@ -2,7 +2,7 @@
 % Please edit documentation in R/all_functions.R
 \name{pairwise.chr.map}
 \alias{pairwise.chr.map}
-\title{Visualization of chromosome pairwise region epistatic interaction strength, based on 
+\title{Visualization of chromosomal pairwise region epistatic interaction strength, based on 
 statistical significance}
 \usage{
 pairwise.chr.map(chr1,chr2,tped,correlations)

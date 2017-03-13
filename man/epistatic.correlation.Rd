@@ -2,8 +2,8 @@
 % Please edit documentation in R/all_functions.R
 \name{epistatic.correlation}
 \alias{epistatic.correlation}
-\title{Calculate the epistatic interaction effect between SNP pairs to construct a 
-WISH network using a genotype data frame created from genarate.genotype()}
+\title{Calculate the epistatic interaction effect between SNP pairs  using a genotype 
+data frame created from genarate.genotype()}
 \usage{
 epistatic.correlation(phenotype, genotype, parallel,test,simple)
 }
