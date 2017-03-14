@@ -258,6 +258,7 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @import doParallel
 #' @import foreach
 #' @import RcppEigen
+#' @import bigmemory
 #' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
 #' linear models. 
@@ -297,7 +298,6 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @export
 
 epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T){
-  registerDoParallel(parallel)
   phenotype < as.matrix(phenotype)
   n<-ncol(genotype)
   coords<-triangular_split(n,parallel)
@@ -313,14 +313,34 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     rm(decide_1)
     rm(decide_2)
     genotype_rev <- as.data.frame(genotype_rev)
-  }
+    y <- as.big.matrix(x = genotype_rev, type = "double", 
+                       separated = FALSE, 
+                       backingfile = "genotype_rev.file", 
+                       descriptorfile = "genotype_rev.desc")
+    # get a description of the matrix
+    mdescy <- describe(y)
+    
+    }
+  x <- as.big.matrix(x = genotype, type = "double", 
+                     separated = FALSE, 
+                     backingfile = "genotype.file", 
+                     descriptorfile = "genotype.desc")
+  # get a description of the matrix
+  mdescx <- describe(x)
+  cl <- makeCluster(parallel)
+  registerDoParallel(cl = cl)
+  clusterExport(cl,c("partial_correlations_core"))
   if (test==T && n > 315) {
     message("Running Test")
     message("Estimating run time based on ~100.000 models")
     start.time <- Sys.time()
     test_coords<-triangular_split(316,parallel)
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype[,1:316],genotype_rev[,1:316],phenotype,test_coords[j,],model=1)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      subset <- partial_correlations(genotype_shared[,1:316],genotype_rev[,1:316],phenotype,test_coords[j,],model=1)
       return(subset)
     }
     end.time <- Sys.time()
@@ -331,7 +351,12 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     estimate<-paste(paste("The estimated run time for the simple model is",model_time),"hours",sep=" ")
     message(estimate)
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype[,1:316],genotype_rev[,1:316],phenotype,test_coords[j,],model=2)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      genotype_rev_shared <- attach.big.matrix("genotype_rev.desc")
+      subset <- partial_correlations(genotype_shared[,1:316],genotype_rev_shared[,1:316],phenotype,test_coords[j,],model=2)
       return(subset)
     }
     end.time <- Sys.time()
@@ -345,23 +370,41 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
   else if (test==T && n <= 315){
     message("Data size too small for testing, running normal analysis")
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      subset <- partial_correlations(genotype_shared,genotype_rev,phenotype,coords[j,],model=1)
       return(subset)
     }
     # Running opposite minor/major co-linearity model
     snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=2)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      genotype_rev_shared <- attach.big.matrix("genotype_rev.desc")
+      subset <- partial_correlations(genotype_shared,genotype_rev_shared,phenotype,coords[j,],model=2)
       return(subset)
     }
   }
   else if (test==F && simple==F) {
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      subset <- partial_correlations(genotype_shared,1,phenotype,coords[j,],model=1)
       return(subset)
     }
     # Running opposite minor/major co-linearity model
     snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=2)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      genotype_rev_shared <- attach.big.matrix("genotype_rev.desc")
+      subset <- partial_correlations(genotype_shared,genotype_rev_shared,phenotype,coords[j,],model=2)
       return(subset)
     }
   }
@@ -410,7 +453,11 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
   }
   else if (test==F && simple==T) {
     snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+      require(RcppEigen)
+      require(bigmemory)
+      require(WISH)
+      genotype_shared <- attach.big.matrix("genotype.desc")
+      subset <- partial_correlations(genotype_shared,1,phenotype,coords[j,],model=1)
       return(subset)
     }
     epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]

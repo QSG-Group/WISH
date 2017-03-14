@@ -1,4 +1,4 @@
-partial_correlations_core <- function(genotype_shared,phenotype,coords,model=1,size){
+partial_correlations_core <- function(genotype_shared,genotype_rev,phenotype,coords,model=1,size){
   n=dim(genotype_shared)[2]
   data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_shared)[2])
   matrix_row <- 0
@@ -91,7 +91,7 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
       require(bigmemory)
       require(RcppEigen)
       genotype_shared <- attach.big.matrix("genotype.desc")
-      subset <- partial_correlations_core(genotype_shared,phenotype,test_coords[j,],model=1)
+      subset <- partial_correlations_core(genotype_shared,1,phenotype,test_coords[j,],model=1)
       return(subset)
     #   n=1000
     #   data_matrix <- matrix(0,nrow = 2*(coords[j,2]-coords[j,1]+1),ncol=1000)
