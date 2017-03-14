@@ -1,3 +1,32 @@
+partial_correlations_core <- function(genotype_shared,phenotype,coords,model=1,size){
+  n=dim(genotype_shared)[2]
+  data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_shared)[2])
+  matrix_row <- 0
+  if (model==1){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = fastLm(phenotype ~ I(genotype_shared[,i])+I(genotype_shared[,j])+I(genotype_shared[,i]*genotype_shared[,j]))
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+  }
+  if (model==2){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = fastLm(phenotype ~ I(genotype[,i])+I(genotype[,j])+I(genotype[,i]*genotype_rev[,j]))
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+  }
+  return(data_matrix)
+}
+
 partial_correlations_test <- function(phenotype,coords,model=1,size){
   n=size
   data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=size)
@@ -27,7 +56,7 @@ partial_correlations_test <- function(phenotype,coords,model=1,size){
   return(data_matrix)
 }
 
-epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simple=T){
+epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simple=T){ 
   phenotype < as.matrix(phenotype)
   n<-ncol(genotype)
   coords<-triangular_split(n,parallel)
@@ -51,8 +80,9 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
                        descriptorfile = "genotype.desc")
     # get a description of the matrix
     mdesc <- describe(x)
-    cl <- makeCluster(10)
+    cl <- makeCluster(parallel)
     registerDoParallel(cl = cl)
+    clusterExport(cl,c("partial_correlations_core"))
     message("Running Test")
     message("Estimating run time based on ~100.000 models")
     start.time <- Sys.time()
@@ -61,21 +91,22 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
       require(bigmemory)
       require(RcppEigen)
       genotype_shared <- attach.big.matrix("genotype.desc")
-      #subset <- partial_correlations_test(phenotype,test_coords[j,],model=1,316)
-      n=1000
-      data_matrix <- matrix(0,nrow = 2*(coords[j,2]-coords[j,1]+1),ncol=1000)
-      matrix_row <- 0
-      for (i in coords[j,1]:coords[j,2]){
-        matrix_row <- matrix_row+1
-        if (i < n){
-          for (j in (i+1):n){
-            tmp_model = fastLm(phenotype ~ I(genotype_shared[,i])+I(genotype_shared[,j])+I(genotype_shared[,i]*genotype_shared[,j]))
-            data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
-          }
-        }
-      }
-      return(data_matrix)
-    }
+      subset <- partial_correlations_core(genotype_shared,phenotype,test_coords[j,],model=1)
+      return(subset)
+    #   n=1000
+    #   data_matrix <- matrix(0,nrow = 2*(coords[j,2]-coords[j,1]+1),ncol=1000)
+    #   matrix_row <- 0
+    #   for (i in coords[j,1]:coords[j,2]){
+    #     matrix_row <- matrix_row+1
+    #     if (i < n){
+    #       for (j in (i+1):n){
+    #         tmp_model = fastLm(phenotype ~ I(genotype_shared[,i])+I(genotype_shared[,j])+I(genotype_shared[,i]*genotype_shared[,j]))
+    #         data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+    #       }
+    #     }
+    #   }
+    #   return(data_matrix)
+    # }
     # message("Running Test")
     # message("Estimating run time based on ~100.000 models")
     # start.time <- Sys.time()
@@ -89,6 +120,7 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
     # #snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
     #subset <- partial_correlations_test(genotype_list[[j]],genotype_list[[j]],phenotype,dim(genotype_list[[j]])[2],316,model=1)
     #return(subset)
+    }
   }
   end.time <- Sys.time()
   time<-as.numeric(end.time-start.time,units="hours")
@@ -124,16 +156,14 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
   names(output)<-c("Pvalues","Coefficients")
   return(output)
 }
-result<-epistatic.correlation_test(genotype = genotype[1:193,1:1000], phenotype = phenotype$W0_W12 ,parallel = 10, test = T)
+result1<-epistatic.correlation_test(genotype = genotype[1:193,1:1000], phenotype = phenotype$W0_W12 ,parallel = 10, test = T)
 
-
-
-
-
-
+hist(result$Pvalues)
 
 
 ids_delete <- read.table("/home/victor/Documents/WISH_files/IDs_delete.txt")
 phenotype <- read.table("/home/victor/Documents/ADD_files/pheno_for_victor.txt",header = T)
 genotype<-generate.genotype(ped = "/home/victor/Documents/ADD_files/INDICES_1_2.ped",tped = "/home/victor/Documents/ADD_files/INDICES1_1_2.tped")
 tped <- fread("/home/victor/Documents/ADD_files/INDICES1_1_2.tped", data.table = F)
+genotype<-genotype[!(rownames(genotype) %in% ids_delete[,1]),]
+
