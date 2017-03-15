@@ -158,6 +158,11 @@ epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simp
 }
 result1<-epistatic.correlation_test(genotype = genotype[1:193,1:1000], phenotype = phenotype$W0_W12 ,parallel = 10, test = T)
 
+result1<-epistatic.correlation(genotype = genotype[1:193,1:1000], phenotype = phenotype$W0_W12 ,parallel = 10, test = F, simple = F)
+hist(result1$Pvalues)
+result1$Coefficients
+
+
 hist(result$Pvalues)
 
 

@@ -312,7 +312,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     genotype_rev[decide_2] <- 1
     rm(decide_1)
     rm(decide_2)
-    genotype_rev <- as.data.frame(genotype_rev)
+    genotype[] <- lapply(genotype_rev, as.numeric)
     y <- as.big.matrix(x = genotype_rev, type = "double", 
                        separated = FALSE, 
                        backingfile = "genotype_rev.file", 
@@ -329,7 +329,6 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
   mdescx <- describe(x)
   cl <- makeCluster(parallel)
   registerDoParallel(cl = cl)
-  clusterExport(cl,c("partial_correlations_core"))
   if (test==T && n > 315) {
     message("Running Test")
     message("Estimating run time based on ~100.000 models")
