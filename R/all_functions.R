@@ -259,6 +259,7 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' @import foreach
 #' @import RcppEigen
 #' @import bigmemory
+#' @import parallel
 #' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
 #' linear models. 
@@ -273,7 +274,7 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' the function generate.genotype(). Make sure that the dataframe contains the 
 #' same individuals as in the phenotype-file, and that those are in the 
 #' same order.
-#' @param parallel Number of cores to use for parallel execution in the function 
+#' @param threads Number of threads to use for parallel execution in the function 
 #' registerDoParallel()
 #' @param test True or False value indicating if a test run is being perform.
 #' If True will calculate the expected time it will take for the full analysis
@@ -297,10 +298,10 @@ partial_correlations <- function(genotype,genotype_rev,phenotype,coords,model=1)
 #' 
 #' @export
 
-epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T){
+epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
   phenotype < as.matrix(phenotype)
   n<-ncol(genotype)
-  coords<-triangular_split(n,parallel)
+  coords<-triangular_split(n,threads)
   if(is.data.frame(genotype)){
     genotype[] <- lapply(genotype, as.numeric)
   }
@@ -312,7 +313,6 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     genotype_rev[decide_2] <- 1
     rm(decide_1)
     rm(decide_2)
-    genotype[] <- lapply(genotype_rev, as.numeric)
     y <- as.big.matrix(x = genotype_rev, type = "double", 
                        separated = FALSE, 
                        backingfile = "genotype_rev.file", 
@@ -327,14 +327,14 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
                      descriptorfile = "genotype.desc")
   # get a description of the matrix
   mdescx <- describe(x)
-  cl <- makeCluster(parallel)
+  cl <- makeCluster(threads)
   registerDoParallel(cl = cl)
   if (test==T && n > 315) {
     message("Running Test")
     message("Estimating run time based on ~100.000 models")
     start.time <- Sys.time()
-    test_coords<-triangular_split(316,parallel)
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    test_coords<-triangular_split(316,threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -349,7 +349,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     model_time<-as.character(model_time)
     estimate<-paste(paste("The estimated run time for the simple model is",model_time),"hours",sep=" ")
     message(estimate)
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -368,7 +368,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
   }
   else if (test==T && n <= 315){
     message("Data size too small for testing, running normal analysis")
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -377,7 +377,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
       return(subset)
     }
     # Running opposite minor/major co-linearity model
-    snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -388,7 +388,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     }
   }
   else if (test==F && simple==F) {
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -397,7 +397,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
       return(subset)
     }
     # Running opposite minor/major co-linearity model
-    snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)
@@ -451,7 +451,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     return(output)
   }
   else if (test==F && simple==T) {
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
       require(RcppEigen)
       require(bigmemory)
       require(WISH)

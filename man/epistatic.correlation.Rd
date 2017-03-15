@@ -20,7 +20,7 @@ the function generate.genotype(). Make sure that the dataframe contains the
 same individuals as in the phenotype-file, and that those are in the 
 same order.}
 
-\item{parallel}{Number of cores to use for parallel execution in the function 
+\item{threads}{Number of threads to use for parallel execution in the function 
 registerDoParallel()}
 
 \item{test}{True or False value indicating if a test run is being perform.
