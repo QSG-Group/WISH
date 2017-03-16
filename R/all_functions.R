@@ -146,7 +146,7 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
     }
   }
   #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
-  passing_snps <- which((colSums((genotype == 2),na.rm = T)*colSums((genotype == 1),na.rm = T)) > 0 & colSums(genotype == 1,na.rm = T) < (dim(genotype)[1]*major.freq))
+  passing_snps <- which((colSums((genotype == 2),na.rm = T) < (dim(genotype)[1]*major.freq)) & colSums(is.na(genotype)) < (0.05*dim(genotype)[1]))
   genotype <- genotype[,passing_snps]
   message(paste(length(passing_snps), "passed QC"), sep=" ")
   return(genotype)

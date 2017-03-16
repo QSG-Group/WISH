@@ -168,7 +168,7 @@ hist(result$Pvalues)
 
 ids_delete <- read.table("/home/victor/Documents/WISH_files/IDs_delete.txt")
 phenotype <- read.table("/home/victor/Documents/ADD_files/pheno_for_victor.txt",header = T)
-genotype<-generate.genotype(ped = "/home/victor/Documents/ADD_files/INDICES_1_2.ped",tped = "/home/victor/Documents/ADD_files/INDICES1_1_2.tped")
+genotype<-generate.genotype(ped = "/home/victor/Documents/ADD_files/INDICES_1_2.ped",tped = "/home/victor/Documents/ADD_files/INDICES1_1_2.tped",major.freq = 0.95)
 genotype<-genotype[!(rownames(genotype) %in% ids_delete[,1]),]
 tped <- fread("/home/victor/Documents/ADD_files/INDICES1_1_2.tped", data.table = F)
 
@@ -185,31 +185,69 @@ correlation_blocks <-function(genotype,threshold=0.9){
   n_block <- 1
   snps <- dim(genotype)[2]
   snp_block_matrix[n_snp,] <- n_block
+  block_coords <- list()
   while(start <= snps){
     if (n_snp == snps){
       snp_block_matrix[snps,1] = n_block
     }
     else{
-      matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+sum((genotype[,n_snp]+genotype[,start]) == 3,na.rm = T)+sum(c(c(genotype[,1] == 1.5)+ c(genotype[,3] == 1.5)) == 1 ,na.rm = T)/2
+      #matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+(sum(c(c(genotype[,n_snp] == 1.5)+ c(genotype[,start] == 1.5)) == 1 ,na.rm = T)/2)
       total <- sum(!is.na(genotype[,n_snp]+genotype[,start]))
-      similarity <- matches/total
+      #similarity <- matches/total
+      p_AB <- (sum(genotype[,n_snp]*genotype[,start] == 4,na.rm = T)+(sum(genotype[,n_snp]+ genotype[,start] == 3.5 ,na.rm = T)/2))/total
+      p_A <- (sum(genotype[,n_snp] == 2,na.rm = T)+ sum(genotype[,n_snp] == 1.5,na.rm = T)/2)/total
+      p_B <- (sum(genotype[,start] == 2,na.rm = T)+ sum(genotype[,start] == 1.5,na.rm = T)/2)/total
+      #print(c(p_A,p_B,p_AB,start))
+      D <- p_AB-p_A*p_B
+      #print(D)
+      #corr <- D^2/(p_A*p_B*(1-p_A)*(1-p_B))
+      if (D < 0){
+        Dd <- max(-p_AB,-(1-p_A)*(1-p_B))
+      }
+      else {
+        Dd <-min(p_A*(1-p_B),p_B*(1-p_A))
+      }
+      similarity<-D/Dd
+      #print(similarity)
       if (similarity >= threshold){
         snp_block_matrix[start,1] = n_block
         start <- start+1
       }
       else {
+        block_coords[[n_block]] <- c(n_snp,start)
         n_snp <- start
         n_block <- n_block +1
         snp_block_matrix[start,1] = n_block
         start <- start +1
+        if (start%%1000 == 0){
+          print(start)
+        }
       }
     }
   }
-  return(snp_block_matrix)
-} 
-
-blocks<-correlation_blocks(genotype,0.9)
+  genotype <- as.matrix(genotype)
+  new_genotype <- matrix(0L, nrow = dim(genotype)[1], ncol = n_block)
+  counter <- 0
+  message("Creating Blocks")
+  for (coords in block_coords){
+    counter <- counter + 1
+    if (counter%%1000 == 0 ){
+      print(counter)
+    }
+    if (coords[1] == coords[2]){
+      new_genotype[,counter] <- genotype[,coords[1]]
+    }
+    else {
+    new_genotype[,counter] <- rowMeans(genotype[,coords[1]:coords[2]],na.rm = T) 
+    }
+  }
+  return(new_genotype)
+}  
+system.time(blocks<-correlation_blocks(genotype,0.9))
+dim(blocks)
 tail(blocks)
+genotype[,blocks[,1] == 1]
+sum(blocks[,1] == 1)
 woot<-sort((table(blocks)),decreasing = T)
 woot[1:100]
 
@@ -258,6 +296,8 @@ correlation_blocks_network <-function(genotype,threshold=0.9){
   n_snp <- 1
   start <- 2
   n_block <- 1
+  similarity <- 0
+  network_size <- 0
   snps <- dim(genotype)[2]
   snp_block_matrix[n_snp,] <- n_block
   while(start <= snps){
@@ -265,32 +305,54 @@ correlation_blocks_network <-function(genotype,threshold=0.9){
       snp_block_matrix[snps,1] = n_block
     }
     else{
-      network_coord <- combn(start:n_snp,2)
-      similarity <- rep(0,dim(network_coord)[2])
-      for (i in 1:dim(network_coord)[2]){
-        matches<-sum(genotype[,network_coord[1,i]]/genotype[,network_coord[2,i]] == 1,na.rm = T)+sum((genotype[,network_coord[1,i]]+genotype[,network_coord[2,i]]) == 3,na.rm = T)+sum(c(c(genotype[,network_coord[1,i]] == 1.5)+ c(genotype[,network_coord[2,i]] == 1.5)) == 1 ,na.rm = T)/2
-        total <- sum(!is.na(genotype[,network_coord[1,i]]+genotype[,network_coord[2,i]]))
-        similarity[i] <- matches/total
+      temp_sim <- 0
+      for (i in n_snp:(start-1)){
+        #matches1<-sum(genotype[,start]/genotype[,i] == 1,na.rm = T)+sum(c(c(genotype[,start] == 1.5)+ c(genotype[,i] == 1.5)) == 1 ,na.rm = T)/2
+        #matches2<-sum(genotype[,start]*genotype[,i] == 2,na.rm = T)+sum(c(c(genotype[,start] == 1.5)+ c(genotype[,i] == 1.5)) == 1 ,na.rm = T)/2
+        #matches <- max(matches1,matches2)
+        total <- sum(!is.na(genotype[,start]+genotype[,i]))
+        p_AB <- (sum(genotype[,n_snp]*genotype[,start] == 4,na.rm = T)+(sum(genotype[,n_snp]+ genotype[,start] == 3.5 ,na.rm = T)/2))/total
+        p_A <- (sum(genotype[,n_snp] == 2,na.rm = T)+ sum(genotype[,n_snp] == 1.5,na.rm = T)/2)/total
+        p_B <- (sum(genotype[,start] == 2,na.rm = T)+ sum(genotype[,start] == 1.5,na.rm = T)/2)/total
+        #print(c(p_A,p_B,p_AB,start))
+        D <- p_AB-p_A*p_B
+        #print(D)
+        #corr <- D^2/(p_A*p_B*(1-p_A)*(1-p_B))
+        if (D < 0){
+          Dd <- max(-p_AB,-(1-p_A)*(1-p_B))
+        }
+        else {
+          Dd <-min(p_A*(1-p_B),p_B*(1-p_A))
+        }
+        temp_sim<-D/Dd
+        network_size <- network_size + 1
+        temp_sim <- temp_sim + matches/total
       }
-      if (sum(similarity)/(dim(network_coord)[2]) >= threshold){
+      similarity <- similarity + temp_sim
+      if (similarity/network_size >= threshold && network_size < 1001){
         snp_block_matrix[start,1] = n_block
         start <- start+1
       }
       else {
         n_snp <- start
         n_block <- n_block +1
-        print(c(start,n_block,dim(network_coord)[2]))
         snp_block_matrix[start,1] = n_block
         start <- start +1
+        if (start %% 1000 == 0){
+        print(c(start,network_size,n_block))
+        }
         similarity <- 0
+        network_size <- 0
       }
     }
   }
   return(snp_block_matrix)
 } 
 
-blocks<-correlation_blocks_network(genotype,0.95)
+blocks<-correlation_blocks_network(genotype,0.9)
 tail(blocks)
+
+matches<-sum(genotype[,1001]/genotype[,1000] == 1,na.rm = T)+sum(c(c(genotype[,1001] == 1.5)+ c(genotype[,1000] == 1.5)) == 1 ,na.rm = T)/2
 
 matches<-sum(tempgen[,1]/tempgen[,2] == 1,na.rm = T)+sum((tempgen[,1]+tempgen[,2]) == 3,na.rm = T)
 score<-matches+(sum(!is.na(tempgen[,1]+tempgen[,2]))-matches)/2
