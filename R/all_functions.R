@@ -475,6 +475,7 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
+  stopCluster(cl)
 }
 #' Visualization of pairwise chromosome epistatic interactions on a genome wide level
 #' @description Visualization of the genome wide chromosome pairwise relative strength
