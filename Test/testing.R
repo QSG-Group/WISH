@@ -360,3 +360,6 @@ sum(c(c(genotype[,1] == 1.5)+ c(genotype[,3] == 1.5)) == 1 ,na.rm = T)
 
 sum((genotype[,1]+genotype[,3]) == 2.5)
 sum((genotype[,1]+genotype[,3]) == 3.5)
+
+1+1
+
