@@ -17,7 +17,7 @@ source("http://bioconductor.org/biocLite.R")
 biocLite(c("GO.db", "preprocessCore", "impute"))
 install.packages("WGCNA")
 
-install_github("AQS-Group/WISH")
+install_github("QSG-Group/WISH")
 ```
 For the reference manual see the WISH.pdf file
 
