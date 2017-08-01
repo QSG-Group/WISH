@@ -55,7 +55,7 @@ genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.i
 After generating the genotypes file it is recomended to run a test run to estimate run time
 of the epistatic interaction calculation based on available computing setup:
 ```
-epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=T)
+epistatic.correlation(<phenotype dataframe>, genotype,threads = <number of cores available> ,test=T)
 ```
 This will give you a indication of expected run time given your input. The next step is to run the analysis:
 We recommend using simple=F for better results:
