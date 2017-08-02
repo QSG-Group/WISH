@@ -205,11 +205,11 @@ triangular_split <- function(n,split) {
 #' @description Internal package function for calculating epsitatic correlations
 #' in sub-matrices
 #' @usage partial_correlations_triangular(genotype,genotype_rev,phenotype,coords,model)
-#' @param genotype Dataframe with the genotype information, resulting from 
+#' @param genotype_1 Dataframe with the genotype information, resulting from 
 #' the function generate.genotype(). Make sure that the dataframe contains the 
 #' same individuals as in the phenotype-file, and that those are in the 
 #' same order.
-#' @param genotype_rev Same as genotpye but with reversed genotype coding
+#' @param genotype_rev_1 Same as genotpye but with reversed genotype coding
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Phenotypes should be continous variables. 
@@ -219,7 +219,7 @@ triangular_split <- function(n,split) {
 #' @return Epsitatic correlations and P-values for the selected set or subset
 #' of the data
 #' @examples
-#' partial_correlations <- partial_correlaiton_triangular(genotype,genotype_rev,phenotype,coords,model)
+#' partial_correlations <- partial_correlaiton_triangular(genotype_1,genotype_rev_1,phenotype,coords,model)
 #' 
 #' @export
 
@@ -262,7 +262,7 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
 #' linear models. 
-#' @usage epistatic.correlation(phenotype, genotype, parallel,test,simple)
+#' @usage epistatic.correlation(phenotype, genotype, threads,test,simple)
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Only give one phenotype column at a time. Phenotypes
@@ -293,7 +293,7 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' BMC Systems Biology 8(Suppl 2):S5. 
 #' http://www.biomedcentral.com/1752-0509/8/S2/S5.
 #' @examples
-#' epistatic.correlation(phenotype,genotype,parallel,test,simple)
+#' epistatic.correlation(phenotype,genotype,threads,test,simple)
 #' 
 #' @export
 
@@ -520,7 +520,7 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
 #' the data.  
 #' @import heatmap3
-#' @usage pairwise.chr.map(chr1,chr2,tped,correlations)
+#' @usage pairwise.chr.map(chr1,chr2,tped,correlations,span)
 #' @param chr1 The name of the first chromosome in the comparison, matching the name
 #' from the tped file
 #' @param chr2 The name of the second chromosome in the comparison, matching the name
