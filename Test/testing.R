@@ -242,7 +242,13 @@ correlation_blocks <-function(genotype,threshold=0.9){
     }
   }
   return(new_genotype)
-}  
+}
+
+genotype_cut<-correlation_blocks(genotype)
+
+dim(genotype_cut)
+
+
 system.time(blocks<-correlation_blocks(genotype,0.9))
 dim(blocks)
 tail(blocks)
@@ -265,7 +271,7 @@ correlation_blocks_running <-function(genotype,threshold=0.9){
       snp_block_matrix[snps,1] = n_block
     }
     else{
-      matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+sum((genotype[,n_snp]+genotype[,start]) == 3,na.rm = T)+sum((genotype[,n_snp] == 1.5 + genotype[,start] == 1.5)==1,na.rm = T)
+      matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T) + sum((genotype[,n_snp]+genotype[,start]) == 3,na.rm = T)+sum(((genotype[,n_snp] == 1.5 + genotype[,start] == 1.5)==1,na.rm = T)
       total <- sum(!is.na(genotype[,n_snp]+genotype[,start]))
       score<-matches+(total-matches)/2
       similarity <- score/total
