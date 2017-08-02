@@ -5,7 +5,7 @@
 \title{Calculate the epistatic interaction effect between SNP pairs  using a genotype 
 data frame created from genarate.genotype()}
 \usage{
-epistatic.correlation(phenotype, genotype, parallel,test,simple)
+epistatic.correlation(phenotype, genotype, threads,test,simple)
 }
 \arguments{
 \item{phenotype}{Dataframe with the rows correspinding to the individuals
@@ -45,7 +45,7 @@ effects between SNP pairs. Those interaction effects are calculated using
 linear models.
 }
 \examples{
-epistatic.correlation(phenotype,genotype,parallel,test,simple)
+epistatic.correlation(phenotype,genotype,threads,test,simple)
 
 }
 \references{

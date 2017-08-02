@@ -408,11 +408,16 @@ sum((genotype[,1]+genotype[,3]) == 3.5)
 #' 
 #' @export
 
-epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T){
-  registerDoParallel(parallel)
-  phenotype < as.matrix(phenotype)
+epistatic.correlation_test <- function(phenotype,genotype,threads=1,test=T,simple=T){ 
+  registerDoParallel(threads)
+  if ( simple == T){ 
+    model <- 1
+  }
+  else {
+    model <- 2
+  }
+    phenotype < as.matrix(phenotype)
   n<-ncol(genotype)
-  coords<-triangular_split(n,parallel)
   if(is.data.frame(genotype)){
     genotype[] <- lapply(genotype, as.numeric)
   }
@@ -430,9 +435,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     message("Running Test")
     message("Estimating run time based on ~100.000 models")
     start.time <- Sys.time()
-    test_coords<-triangular_split(316,parallel)
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype[,1:316],genotype_rev[,1:316],phenotype,test_coords[j,],model=1)
+    coord_splits <-triangular_split(316,threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
     end.time <- Sys.time()
@@ -442,8 +447,9 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     model_time<-as.character(model_time)
     estimate<-paste(paste("The estimated run time for the simple model is",model_time),"hours",sep=" ")
     message(estimate)
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype[,1:316],genotype_rev[,1:316],phenotype,test_coords[j,],model=2)
+    coord_splits <-triangular_split(316,threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],model=2) 
       return(subset)
     }
     end.time <- Sys.time()
@@ -454,27 +460,30 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     estimate<-paste(paste("The estimated run time for the full model is",model_time),"hours",sep=" ")
     message(estimate)
   }
-  else if (test==T && n <= 315){
+  else if (test==T && n <= 315){ 
     message("Data size too small for testing, running normal analysis")
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+    coord_splits <-triangular_split(dim(genotype)[2],threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
-    
     # Running opposite minor/major co-linearity model
-    snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=2)
+    coord_splits <-triangular_split(dim(genotype)[2],threads)
+    snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
   }
   else if (test==F && simple==F) {
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+    coord_splits <-triangular_split(dim(genotype)[2],threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
     # Running opposite minor/major co-linearity model
-    snp_matrix_rev <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=2)
+    coord_splits <-triangular_split(dim(genotype)[2],threads)
+    snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
   }
@@ -521,9 +530,10 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
-  else if (test==F && simple==T) {
-    snp_matrix <- foreach(j = 1:parallel, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations(genotype,genotype_rev,phenotype,coords[j,],model=1)
+  else if (test==F && simple==T){ 
+    coord_splits <-triangular_split(dim(genotype)[2],threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
       return(subset)
     }
     epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]
@@ -542,7 +552,7 @@ epistatic.correlation <- function(phenotype,genotype,parallel=1,test=T,simple=T)
     names(output)<-c("Pvalues","Coefficients")
     return(output)
   }
-}
+} 
 
 system2("ulimit","-s 16384")
 system("ulimit -s")
@@ -552,7 +562,13 @@ genotype<-generate.genotype(ped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_p
 genotype<-genotype[!(rownames(genotype) %in% ids_delete[,1]),]
 tped <- fread("/data/nbg153/ADHD/WISH_files_newest/INDICES1_1_2.tped", data.table = F)
 
+new_geno <- cbind(genotype,genotype,genotype)
+
 dim(genotype)
+
+result<-epistatic.correlation_test(phenotype[,3],genotype,threads= 40,test=F,simple=F)
+
+
 
 phenotype
 triangular_split_test <- function(n,split) {
@@ -582,6 +598,7 @@ triangular_split_test <- function(n,split) {
   return(boundaries)
 }
 
+# Creates coordinates splits for rectangular matrices
 square_split <- function(threads,rows) { 
   split <- floor(rows/threads)
   coords <- matrix(0,nrow=2,ncol=threads)
@@ -602,90 +619,189 @@ square_split <- function(threads,rows) {
 
 square_split(10,1000)
 
-n <- 3
-threads=10
-square_size <- dim(genotype)[2]
-snp_matrix <- matrix(0,nrow=2*square_size,ncol=square_size)
-splits<-floor(square_size /n)
-square_coords <- c()
-for (i in 1:n){
-  if (i == n){
-    coord <- square_size
-  }
-  else {
-    coord <- i*splits
-  }
-  square_coords <- c(square_coords,coord)
-  }
-pair_coords<-combn(square_coords,2)
-coord_pairs<-cbind(pair_coords,rbind(square_coords,square_coords))
-for (i in 1:2) {
-  registerDoParallel(10)
-  if (coord_pairs[1,i] == coord_pairs[2,i]){
-    print("thing")
-  }
-  else {
-    if (square_size == coord_pairs[1,i]){
-        temp_geno_1 <- genotype[,square_coords[n-1]:square_coords[n]]
-        temp_geno_2 <- genotype[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
-        coords_splits <-square_split(threads,dim(temp_geno_1)[2])
-        partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-          subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,phenotype=phenotype[,3],model=1)
-          return(subset)
-        }
-        snp_matrix[(square_coords[n-1]*2-1):(square_coords[n]*2),(coord_pairs[2,i]-splits+1):coord_pairs[2,i]] <- partial_results
+memory_subspace <- function(n,threads,genotype,genotype_rev=0,phenotype,model) { 
+  # Split correlation into n^2/2 section for memory usage saving
+  registerDoParallel(threads)
+  if (n == 1){ 
+    coord_splits <-triangular_split_test(dim(genotype)[2],threads)
+    snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      return(subset)
     }
-    else if (square_size == coord_pairs[2,i]){ 
-        temp_geno_2 <- genotype[,square_coords[n-1]:square_coords[n]]
-        temp_geno_1 <- genotype[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
-        coords_splits <-square_split(threads,dim(temp_geno_1)[2])
-        partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-          subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,phenotype=phenotype[,3],model=1)
-          return(subset)
-        }
-        snp_matrix[((coord_pairs[1,i]-splits+1)*2-1):(coord_pairs[1,i]*2),square_coords[n-1]:square_coords[n]] <- partial_results
-        }
-    else { 
-      temp_geno_1 <- genotype[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
-      temp_geno_2 <- genotype[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
-      coords_splits <-square_split(threads,dim(temp_geno_1)[2])
+  }
+  else {
+  square_size <- dim(genotype)[2]
+  snp_matrix <- matrix(0,nrow=2*square_size,ncol=square_size)
+  splits<-floor(square_size/n)
+  square_coords <- c()
+  for (i in 1:n){
+    if (i == n){
+      coord <- square_size
+    }
+    else {
+      coord <- i*splits
+    }
+    square_coords <- c(square_coords,coord)
+    }
+  pair_coords<-combn(square_coords,2)
+  coord_pairs<-cbind(pair_coords,rbind(square_coords,square_coords))
+  # Run the new subsets and collect them in the main matrix
+  
+  for (i in 1:dim(coord_pairs)[2]) { 
+    if (coord_pairs[1,i] == coord_pairs[2,i]){
+      temp_geno <- genotype[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
+      temp_geno_rev <- 0
+      if (model == 2){
+        temp_geno_rev <- genotype_rev[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
+      }
+      coord_splits <-triangular_split_test(dim(temp_geno)[2],threads)
       partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-        subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,phenotype=phenotype[,3],model=1)
-        return(subset)
+      subset <- partial_correlations_triangular(temp_geno,temp_geno_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      return(subset)
       }
       snp_matrix[((coord_pairs[1,i]-splits+1)*2-1):(coord_pairs[1,i]*2),(coord_pairs[2,i]-splits+1):coord_pairs[2,i]] <- partial_results
     }
-  } 
-} 
+    else {
+      if (square_size == coord_pairs[1,i]){
+          temp_geno_1 <- genotype[,square_coords[n-1]:square_coords[n]]
+          temp_geno_2 <- genotype[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
+          temp_geno_rev <- 0
+          if (model == 2)
+          {
+            temp_geno_rev <-  genotype_rev[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
+          } 
+          coords_splits <-square_split(threads,dim(temp_geno_1)[2])
+          partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+            subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,temp_geno_rev,phenotype=phenotype,model=model)
+            return(subset)
+          }
+         snp_matrix[(square_coords[n-1]*2-1):(square_coords[n]*2),(coord_pairs[2,i]-splits+1):coord_pairs[2,i]] <- partial_results
+      }
+      else if (square_size == coord_pairs[2,i]){ 
+          temp_geno_2 <- genotype[,square_coords[n-1]:square_coords[n]]
+          temp_geno_1 <- genotype[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
+          print(dim(temp_geno_1))
+          print(dim(temp_geno_2))
+          temp_geno_rev <- 0
+          if (model == 2){
+            temp_geno_rev <- genotype_rev[,square_coords[n-1]:square_coords[n]]
+          }
+          coords_splits <-square_split(threads,dim(temp_geno_1)[2])
+          partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+            subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,temp_geno_rev,phenotype=phenotype,model=model)
+            return(subset)
+          }
+          #snp_matrix[((coord_pairs[1,i]-splits+1)*2-1):(coord_pairs[1,i]*2),square_coords[n-1]:square_coords[n]] <- partial_results
+          }
+      else { 
+        temp_geno_1 <- genotype[,(coord_pairs[1,i]-splits+1):coord_pairs[1,i]]
+        temp_geno_2 <- genotype[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
+        print(dim(temp_geno_1))
+        print(dim(temp_geno_2))
+        temp_geno_rev <- 0
+        if (model == 2){
+          temp_geno_rev <- genotype_rev[,(coord_pairs[2,i]-splits+1):coord_pairs[2,i]]
+        }
+        coords_splits <-square_split(threads,dim(temp_geno_1)[2])
+        partial_results <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
+          subset <- partial_correlations(temp_geno_1[,coords_splits[j,1]:coords_splits[j,2]],temp_geno_2,temp_geno_rev,phenotype=phenotype,model=model)
+          return(subset)
+        }
+        #snp_matrix[((coord_pairs[1,i]-splits+1)*2-1):(coord_pairs[1,i]*2),(coord_pairs[2,i]-splits+1):coord_pairs[2,i]] <- partial_results
+      }
+    } 
+  }
+  }
+  #return(snp_matrix)
+}  
 
-partial_correlations <- function(genotype1,genotype2,genotype1_rev=0,phenotype,model=1){ 
-  size1<-dim(genotype1)[2]
-  size2<-dim(genotype2)[2]
-  #print(c(size1,size2)) 
-  data_matrix <- matrix(0,nrow = 2*(size1),ncol=size2)
-  if (model==1){
-    for (i in 1:size1){
+result<-memory_subspace(1,20,genotype = genotype,genotype_rev = genotype,phenotype=phenotype[,3],model = 1)
+
+result<-memory_subspace(1,20,genotype = new_new_geno,genotype_rev = new_geno,phenotype=phenotype[,3],model = 1)
+
+new_new_geno <- cbind(new_geno,new_geno)
+dim(new_geno)
+
+result<-epistatic.correlation_test(phenotype[,3],genotype,threads= 40,test=T,simple=T)
+
+  # New partial correlation formula based on the non-traingular subsetting
+partial_correlations <- function(genotype1,genotype2,genotype2_rev,phenotype,model=1){ 
+    size1<-dim(genotype1)[2]
+    size2<-dim(genotype2)[2]
+    data_matrix <- matrix(0,nrow = 2*(size1),ncol=size2) 
+    if (model==1){
+      for (i in 1:size1){
+          for (j in 1:size2){
+            tmp_model = fastLm(phenotype ~ I(genotype1[,i])+I(genotype2[,j])+I(genotype1[,i]*genotype2[,j]))
+            data_matrix[(i*2-1):(i*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+    if (model==2){
+      for (i in 1:size1){
         for (j in 1:size2){
-          tmp_model = fastLm(phenotype ~ I(genotype1[,i])+I(genotype2[,j])+I(genotype1[,i]*genotype2[,j]))
+          tmp_model = fastLm(phenotype ~ I(genotype1[,i])+I(genotype2[,j])+I(genotype1[,i]*genotype2_rev[,j]))
           data_matrix[(i*2-1):(i*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+    gc(verbose = F)
+    return(data_matrix)
+  } 
+
+
+partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,coords,model=1){
+  n=dim(genotype_1)[2]
+  data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_1)[2])
+  matrix_row <- 0
+  if (model==1){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = fastLm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_1[,j]))
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
       }
     }
   }
   if (model==2){
-    for (i in 1:size1){
+    for (i in coords[1]:coords[2]){
       matrix_row <- matrix_row+1
       if (i < n){
-        for (j in size2){
-          tmp_model = fastLm(phenotype ~ I(genotype1_rev[,i])+I(genotype2[,j])+I(genotype1_rev[,i]*genotype2[,j]))
+        for (j in (i+1):n){
+          tmp_model = fastLm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_rev_1[,j]))
           data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
         }
       }
     }
   }
   return(data_matrix)
-  } 
+}
 
-
-
+partial_correlations <- function(genotype1,genotype2,genotype2_rev,phenotype,model=1){ 
+  size1<-dim(genotype1)[2]
+  size2<-dim(genotype1)[2]
+  genotype2 <- 0
+  #print(c(size1,size2)) 
+  data_matrix <- matrix(0,nrow = 2*(size1),ncol=size2) 
+  if (model==1){
+    for (i in 1:size1){
+      for (j in 1:size2){
+        tmp_model = fastLm(phenotype ~ I(genotype1[,i])+I(genotype1[,j])+I(genotype1[,i]*genotype1[,j]))
+        data_matrix[(i*2-1):(i*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+      }
+    }
+  }
+  if (model==2){
+    for (i in 1:size1){
+      for (j in 1:size2){
+        tmp_model = fastLm(phenotype ~ I(genotype1[,i])+I(genotype2[,j])+I(genotype1[,i]*genotype2_rev[,j]))
+        data_matrix[(i*2-1):(i*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+      }
+    }
+  }
+  return(data_matrix)
+} 
 
 
