@@ -141,13 +141,16 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
     }  
     ped_trim[ped_trim==0] <- NA
     for (i in 1:(dim(genotype)[2])){
-      
       genotype[,i] <- rowMeans((ped_trim[,c(2*i-1,2*i)]))
     }
   }
   #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
   passing_snps <- which((colSums((genotype == 2),na.rm = T) < (dim(genotype)[1]*major.freq)) & colSums(is.na(genotype)) < (0.05*dim(genotype)[1]))
   genotype <- genotype[,passing_snps]
+  genotype[genotype==2] <- 0
+  genotype[genotype==1] <- 4
+  genotype[genotype==1.5] <- 1
+  genotype[genotype==4] <- 2
   message(paste(length(passing_snps), "passed QC"), sep=" ")
   return(genotype)
 }
@@ -312,10 +315,10 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
   }
   if (simple==F || test==T){
     genotype_rev <- genotype
-    decide_1<-(genotype_rev==1)
+    decide_1<-(genotype_rev==0)
     decide_2<-(genotype_rev==2)
     genotype_rev[decide_1] <- 2
-    genotype_rev[decide_2] <- 1
+    genotype_rev[decide_2] <- 0
     rm(decide_1)
     rm(decide_2)
     genotype_rev <- as.data.frame(genotype_rev)
