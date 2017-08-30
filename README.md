@@ -91,7 +91,7 @@ Finally to create modules of interacting markers use the generate.modules functi
 ```
 modules <-generate.modules(correlations)
 ```
-***warning*** If you have epistatic correlatoin coefficients values that are strong outliers this can heavily affect
+***warning*** If you have epistatic correlation coefficients values that are strong outliers this can heavily affect
 this step or even make it fail. Thus it is recommended to set those coefficients to 0, for example if we only want 
 coefficients between 1000 and -1000:
 ```
