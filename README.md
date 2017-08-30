@@ -6,17 +6,35 @@ Weighted Interaction SNP Hub R Package
 
 Install WISH with the following commands:
 
+For Linux/Mac Users:
+
 ```
 ### Instaling devtools
 install.packages(c("devtools","curl", "httr"))
+### Install WISH
 library("devtools")
+install_github("QSG-Group/WISH")
+```
+
+For Windows Users ( or if above does not work):
+
+```
+### Instaling devtools
+install.packages(c("devtools","curl", "httr"))
+
 
 ### Installing WGCNA first
-install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival")
+install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival"))
 source("http://bioconductor.org/biocLite.R")
+biocLite()
 biocLite(c("GO.db", "preprocessCore", "impute"))
 install.packages("WGCNA")
 
+### Install Rest of Dependencies
+install.packages(c("doParallel", "foreach","fastcluster", "Rcpp", "RcppEigen", "data.table", "corrplot", "heatmap3", "flashClust", "bigmemory", "parallel"))
+
+### Install WISH
+library("devtools")
 install_github("QSG-Group/WISH")
 ```
 For the reference manual see the WISH.pdf file
