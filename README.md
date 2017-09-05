@@ -6,17 +6,35 @@ Weighted Interaction SNP Hub R Package
 
 Install WISH with the following commands:
 
+For Linux/Mac Users:
+
 ```
 ### Instaling devtools
 install.packages(c("devtools","curl", "httr"))
+### Install WISH
 library("devtools")
+install_github("QSG-Group/WISH")
+```
+
+For Windows Users ( or if above does not work):
+
+```
+### Instaling devtools
+install.packages(c("devtools","curl", "httr"))
+
 
 ### Installing WGCNA first
-install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival")
+install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival"))
 source("http://bioconductor.org/biocLite.R")
+biocLite()
 biocLite(c("GO.db", "preprocessCore", "impute"))
 install.packages("WGCNA")
 
+### Install Rest of Dependencies
+install.packages(c("doParallel", "foreach","fastcluster", "Rcpp", "RcppEigen", "data.table", "corrplot", "heatmap3", "flashClust", "bigmemory", "parallel"))
+
+### Install WISH
+library("devtools")
 install_github("QSG-Group/WISH")
 ```
 For the reference manual see the WISH.pdf file
@@ -73,7 +91,7 @@ Finally to create modules of interacting markers use the generate.modules functi
 ```
 modules <-generate.modules(correlations)
 ```
-***warning*** If you have epistatic correlatoin coefficients values that are strong outliers this can heavily affect
+***warning*** If you have epistatic correlation coefficients values that are strong outliers this can heavily affect
 this step or even make it fail. Thus it is recommended to set those coefficients to 0, for example if we only want 
 coefficients between 1000 and -1000:
 ```
@@ -82,10 +100,10 @@ correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coeff
 The range of desired values is individual depending on the properties of each dataset.
 
 # Contact
-Victor A. O Carmelo, vaoc@sund.ku.dk
-Faculty of Health and Medical Sciences
-Department of Veterinary and Animal Sciences
-Animal Breeding, Quantitative Genetics & Systems Biology Group
+Victor A. O Carmelo, vaocar@bioinformatics.dtu.dk
+Quantitative Systems Genetics Group
+Department of Bio and Health Informatics
+Technical University of Denmark
 
 # References
 
