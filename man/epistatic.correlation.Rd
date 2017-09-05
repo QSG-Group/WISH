@@ -31,6 +31,10 @@ based on calculating 100.000 models with the setting chosen}
 minor/minor directed interaction model are tested (simple=T) or if if 
 interactions on the major/minor minor axis are tested as well, with the 
 best one of the two being selected (simple=F).}
+
+\item{glm}{if T will use a generelized linear model with a binomial link
+function instead of a regular linear model. This should be used if your
+phenotype is binary.}
 }
 \value{
 A list of two matrices. The first matrix gives the epistatic

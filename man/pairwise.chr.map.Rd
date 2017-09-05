@@ -5,7 +5,7 @@
 \title{Visualization of chromosomal pairwise region epistatic interaction strength, based on 
 statistical significance}
 \usage{
-pairwise.chr.map(chr1,chr2,tped,correlations)
+pairwise.chr.map(chr1,chr2,tped,correlations,span)
 }
 \arguments{
 \item{chr1}{The name of the first chromosome in the comparison, matching the name

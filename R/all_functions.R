@@ -281,57 +281,6 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
   return(data_matrix)
 }
 
-#' ***Internal Use Function*** This function calculates the epistatic correlations
-#' in a subset of a matrix space based on coordiantes using a generlized linear
-#' model
-#' @description Internal package function for calculating epsitatic correlations
-#' in sub-matrices
-#' @usage partial_correlations_triangular_glm(genotype,genotype_rev,phenotype,coords,model)
-#' @param genotype_1 Dataframe with the genotype information, resulting from 
-#' the function generate.genotype(). Make sure that the dataframe contains the 
-#' same individuals as in the phenotype-file, and that those are in the 
-#' same order.
-#' @param genotype_rev_1 Same as genotpye but with reversed genotype coding
-#' @param phenotype Dataframe with the rows correspinding to the individuals
-#' in the analysis,and columns for the different measured phenotypes and 
-#' fixed/random factors. Phenotypes should be continous variables. 
-#' @param coords Matrix of row split coordinates for subseting input space
-#' @param model Specification controlling if MM or Mm directed interaction
-#' model is used.
-#' @return Epsitatic correlations and P-values for the selected set or subset
-#' of the data
-#' @examples
-#' partial_correlations <- partial_correlaiton_triangular_glm(genotype_1,genotype_rev_1,phenotype,coords,model)
-#' 
-#' @export
-partial_correlations_triangular_glm <- function(genotype_1,genotype_rev_1,phenotype,coords,model=1){
-  n=dim(genotype_1)[2]
-  data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_1)[2])
-  matrix_row <- 0
-  if (model==1){
-    for (i in coords[1]:coords[2]){
-      matrix_row <- matrix_row+1
-      if (i < n){
-        for (j in (i+1):n){
-          tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_1[,j]),family=binomial())
-          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
-        }
-      }
-    }
-  }
-  if (model==2){
-    for (i in coords[1]:coords[2]){
-      matrix_row <- matrix_row+1
-      if (i < n){
-        for (j in (i+1):n){
-          tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_rev_1[,j]),family=binomial())
-          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
-        }
-      }
-    }
-  }
-  return(data_matrix)
-} 
 
 
 
