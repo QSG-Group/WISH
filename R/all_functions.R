@@ -226,10 +226,11 @@ triangular_split <- function(n,split) {
 #' 
 #' @export
 
-partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,coords,model=1){
+partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,coords,glm=F,model=1){
   n=dim(genotype_1)[2]
   data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_1)[2])
   matrix_row <- 0
+  if ( glm == F){
   if (model==1){
     for (i in coords[1]:coords[2]){
       matrix_row <- matrix_row+1
@@ -252,8 +253,88 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
       }
     }
   }
+  }
+  if ( glm == T){
+    if (model==1){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_1[,j]),family=binomial())
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+  }
+    if (model==2){
+      for (i in coords[1]:coords[2]){
+        matrix_row <- matrix_row+1
+        if (i < n){
+          for (j in (i+1):n){
+            tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_rev_1[,j]),family=binomial())
+            data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+          }
+        }
+      }
+    }
+    }
   return(data_matrix)
 }
+
+#' ***Internal Use Function*** This function calculates the epistatic correlations
+#' in a subset of a matrix space based on coordiantes using a generlized linear
+#' model
+#' @description Internal package function for calculating epsitatic correlations
+#' in sub-matrices
+#' @usage partial_correlations_triangular_glm(genotype,genotype_rev,phenotype,coords,model)
+#' @param genotype_1 Dataframe with the genotype information, resulting from 
+#' the function generate.genotype(). Make sure that the dataframe contains the 
+#' same individuals as in the phenotype-file, and that those are in the 
+#' same order.
+#' @param genotype_rev_1 Same as genotpye but with reversed genotype coding
+#' @param phenotype Dataframe with the rows correspinding to the individuals
+#' in the analysis,and columns for the different measured phenotypes and 
+#' fixed/random factors. Phenotypes should be continous variables. 
+#' @param coords Matrix of row split coordinates for subseting input space
+#' @param model Specification controlling if MM or Mm directed interaction
+#' model is used.
+#' @return Epsitatic correlations and P-values for the selected set or subset
+#' of the data
+#' @examples
+#' partial_correlations <- partial_correlaiton_triangular_glm(genotype_1,genotype_rev_1,phenotype,coords,model)
+#' 
+#' @export
+partial_correlations_triangular_glm <- function(genotype_1,genotype_rev_1,phenotype,coords,model=1){
+  n=dim(genotype_1)[2]
+  data_matrix <- matrix(0,nrow = 2*(coords[2]-coords[1]+1),ncol=dim(genotype_1)[2])
+  matrix_row <- 0
+  if (model==1){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_1[,j]),family=binomial())
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+  }
+  if (model==2){
+    for (i in coords[1]:coords[2]){
+      matrix_row <- matrix_row+1
+      if (i < n){
+        for (j in (i+1):n){
+          tmp_model = glm(phenotype ~ I(genotype_1[,i])+I(genotype_1[,j])+I(genotype_1[,i]*genotype_rev_1[,j]),family=binomial())
+          data_matrix[(matrix_row*2-1):(matrix_row*2),j]<-c(tmp_model$coefficients[length(tmp_model$coefficients)],summary(tmp_model)$coefficients[dim(summary(tmp_model)$coefficients)[1],4])
+        }
+      }
+    }
+  }
+  return(data_matrix)
+} 
+
+
+
 
 #' Calculate the epistatic interaction effect between SNP pairs  using a genotype 
 #' data frame created from genarate.genotype()
@@ -285,6 +366,9 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' minor/minor directed interaction model are tested (simple=T) or if if 
 #' interactions on the major/minor minor axis are tested as well, with the 
 #' best one of the two being selected (simple=F).
+#' @param glm if T will use a generelized linear model with a binomial link
+#' function instead of a regular linear model. This should be used if your
+#' phenotype is binary. 
 #' @return A list of two matrices. The first matrix gives the epistatic
 #' interaction effects between all the SNP-pairs which were in the input 
 #' genotype data) and selected with the pvalue from the GWAS results. 
@@ -300,7 +384,7 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' 
 #' @export
 
-epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){ 
+epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,glm=F){ 
   registerDoParallel(threads)
   if ( simple == T){ 
     model <- 1
@@ -329,7 +413,7 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
     start.time <- Sys.time()
     coord_splits <-triangular_split(316,threads)
     snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
     end.time <- Sys.time()
@@ -341,7 +425,7 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
     message(estimate)
     coord_splits <-triangular_split(316,threads)
     snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],model=2) 
+      subset <- partial_correlations_triangular(genotype[,1:316],genotype_rev[,1:316],phenotype=phenotype,coord_splits[j,],glm=glm,model=2) 
       return(subset)
     }
     end.time <- Sys.time()
@@ -356,26 +440,26 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
     message("Data size too small for testing, running normal analysis")
     coord_splits <-triangular_split(dim(genotype)[2],threads)
     snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
     # Running opposite minor/major co-linearity model
     coord_splits <-triangular_split(dim(genotype)[2],threads)
     snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
   }
   else if (test==F && simple==F) {
     coord_splits <-triangular_split(dim(genotype)[2],threads)
     snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
     # Running opposite minor/major co-linearity model
     coord_splits <-triangular_split(dim(genotype)[2],threads)
     snp_matrix_rev <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
   }
@@ -425,7 +509,7 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T){
   else if (test==F && simple==T){ 
     coord_splits <-triangular_split(dim(genotype)[2],threads)
     snp_matrix <- foreach(j = 1:threads, .combine='rbind', .inorder=T, .verbose=F) %dopar% {
-      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],model=model) 
+      subset <- partial_correlations_triangular(genotype,genotype_rev,phenotype=phenotype,coord_splits[j,],glm=glm,model=model) 
       return(subset)
     }
     epi_cor <- snp_matrix[seq(1,nrow(snp_matrix)-1,2),]
