@@ -179,7 +179,7 @@ tped <- fread("/home/victor/Documents/ADD_files/INDICES1_1_2.tped", data.table =
 
 correlation_blocks <-function(genotype,threshold=0.9,measure="r2"){ 
   if (!(measure %in% c("r2","Dd"))){
-    print("unknown LD measure")
+    print("unknown LD measure, should be r2 or Dd")
   }
   else{
   snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
@@ -241,15 +241,8 @@ correlation_blocks <-function(genotype,threshold=0.9,measure="r2"){
         n_block <- n_block+1
         snp_block_matrix[start,1] = n_block
         start <- start +1
-        # if (start%%1000 == 0){
-        #   print(start)
-        # }
         }
-      # if (start == snps){
-      # 
-      # }
       }
-    #}
   }
   genotype <- as.matrix(genotype)
   new_genotype <- matrix(0L, nrow = dim(genotype)[1], ncol = n_block)
@@ -268,8 +261,8 @@ correlation_blocks <-function(genotype,threshold=0.9,measure="r2"){
         tagging_markers <- c(tagging_markers,selection) 
       }  
     }
-  output<-list(new_genotype,block_coords,snp_block_matrix,r_vector,D_vector,Dd_vector)
-  names(output)<-c("genotype","block_coords","snp_id_blocks","r_values","D_values","Dd_values")
+  output<-list(new_genotype,block_coords,snp_block_matrix,r_vector,D_vector,Dd_vector,tagging_markers)
+  names(output)<-c("genotype","block_coords","snp_id_blocks","r_values","D_values","Dd_values","tagging_markers")
   return(output)
   }
 }
@@ -408,7 +401,8 @@ correlation_blocks_running <-function(genotype,threshold=0.9){
       }
     }
   }
-  return(snp_block_matrix)
+  
+  
 } 
 
 
@@ -425,6 +419,7 @@ correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000
   similarity <- 0
   network_size <- 0
   r2_values <- c()
+  block_coords <- list()
   snps <- dim(genotype)[2]
   snp_block_matrix[n_snp,] <- n_block
   while(start <= snps){
@@ -450,39 +445,77 @@ correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000
         #print(c(p_A,p_B,p_AB,start))
         D <- p_AB-(p_A*p_B)
         r2 <- D^2/(p_A*p_a*p_B*p_b)
-        if (r2 > 1.01){
-          r2 <- 0
-        }
         r2_values <- c(r2_values,r2)
         temp_sim <- r2
         network_size <- network_size + 1
       }
       similarity <- similarity + temp_sim
-      print(c(similarity,similarity/network_size,temp_sim))
+      #print(c(similarity,similarity/network_size,temp_sim))
       if (similarity/network_size >= threshold && network_size < 1001){
         snp_block_matrix[start,1] = n_block
         start <- start+1
+        if (start > snps){
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+        }
       }
       else {
+        if (start == snps){
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          n_block <- n_block + 1
+          snp_block_matrix[snps,1] <- n_block
+          block_coords[[n_block]] <- c(start,start)
+          start <- start + 1
+        }
+        else{
+        block_coords[[n_block]] <- c(n_snp,(start-1))
         n_snp <- start
         n_block <- n_block +1
         snp_block_matrix[start,1] = n_block
         start <- start +1
-        if (start %% 1000 == 0){
-        print(c(start,network_size,n_block))
-        }
         similarity <- 0
         network_size <- 0
+        }
       }
     }
-  } 
-  return(list(snp_block_matrix,r2_values)) 
-}  
+  }
+  genotype <- as.matrix(genotype)
+  new_genotype <- matrix(0L, nrow = dim(genotype)[1], ncol = n_block)
+  counter <- 0
+  tagging_markers <- c()
+  message("Creating Blocks")
+  for (coords in block_coords){
+    counter <- counter + 1
+    if (coords[1] == coords[2]){
+      new_genotype[,counter] <- genotype[,coords[1]]
+      tagging_markers <- c(tagging_markers,coords[1])
+    }
+    else {
+      selection<- round(median(c(coords[1]:coords[2]))) 
+      new_genotype[,counter] <- genotype[,selection] 
+      tagging_markers <- c(tagging_markers,selection) 
+    }  
+  }
+  output<-list(new_genotype,tagging_markers,snp_block_matrix,r2_values)
+  names(output)<-c("genotype","tagging_markers","genotype_block_matrix")
+  return(output)
+}
 
 blocks<-correlation_blocks_network(genotype,0.8)
+
+
+dim(blocks[[1]])
+dim(blocks[[2]])
+tail(blocks[[2]])
+tail(blocks[[1]])
+
+length(blocks$tagging_markers)
+blocks<-blocks$SNP_block_matrix
+
 hist(blocks[[2]])
 dim(blocks[[1]])
-tail(blocks[[1]])
+tail(blocks[[3]])
+
+
 
 matches<-sum(genotype[,1001]/genotype[,1000] == 1,na.rm = T)+sum(c(c(genotype[,1001] == 1.5)+ c(genotype[,1000] == 1.5)) == 1 ,na.rm = T)/2
 
@@ -1192,15 +1225,13 @@ epistatic.correlation_glm <- function(phenotype,genotype,threads=1,test=T,simple
 }   
 
 rand_pheno <- sample(c(1,0),193,T)
-system.time(result2<-epistatic.correlation_glm(rand_pheno,geno_block[,1:1000],threads= 10,test=T,simple=F))
+system.time(result2<-epistatic.correlation(rand_pheno,genotype[,1:1000],threads= 10,test=T,glm=T,simple=F)) 
 
 tmp_model<-speedglm(rand_pheno ~ I(genotype[,1])+I(genotype[,2])+I(genotype[,2]*genotype[,1]),family=binomial())
 
 
 mode1<-formula(phenotype[,3] ~ I(genotype[,1])+I(genotype[,2])+I(genotype[,2]*genotype[,1]))
 mode2<-formula(phenotype[,3] ~ I(genotype[,1])+I(genotype[,2])+I(genotype[,2]*genotype[,1]))
-
-lm(mode1)
 
 
 

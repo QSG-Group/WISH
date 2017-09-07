@@ -730,3 +730,122 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
   names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
   return(output)
 }
+
+
+#' Function for creating blocks of input genotypes based on LD and selecting tagging variants in each
+#' block. Genotypes should be sorted by genomic coordinates and chromosome. 
+#' @description Given an input set of genotypes from the generate.genotype() function, this function
+#' will generate LD blocks based on average LD between all members in each block, using r2 metric of LD.
+#' Scanning linearly over the genotype file from the first row, genotypes will be contiously added to blocks
+#' as long as the average of all pairwise r2 values of the genotypes in the block are above threshold. When
+#' the values goes below the threshold, the last genotype tested will be the base of a new block. For each
+#' block the median genotype in block will be selected as a tagging genotype. 
+#' @usage LD_blocks(genotype,threshold,max_blocksize)
+#' @param genotype A genotype matrix from generate.genotype()
+#' @param threshold The threshold used for generating blocks, indicating the minimum average pairwise r2
+#' value allowed. 
+#' @param max_block_size The maximum block size allowed.  
+#' @return Returns a named list with the following objects:
+#' \itemize{
+#'  \item{""genotype""}{The tagging genotypes selected from the blocks}
+#'  \item{"tagging_genotype"}{The genotype selected to represent each block. The median genotype, rounded down is selected}
+#'  \item{"genotype_block_matrix"}{A matrix indicating which block each genotype belongs to}
+#' }
+#' @examples
+#'  LD_blocks(genotype,threshold,max_blocksize)
+#' 
+#' @export
+
+
+
+LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){ 
+  snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
+  rownames(snp_block_matrix) <- colnames(genotype)
+  n_snp <- 1
+  start <- 2
+  n_block <- 1
+  network_size <- 0
+  r2_values <- c()
+  block_coords <- list()
+  snps <- dim(genotype)[2]
+  snp_block_matrix[n_snp,] <- n_block
+  while(start <= snps){ 
+    if (n_snp == snps){
+      snp_block_matrix[snps,1] = n_block
+    }
+    else{ 
+      temp_sim <- 0
+      network_pairs<-combn(c(n_snp:(start)),2)
+      for (i in 1:dim(network_pairs)[2]){
+        start_t <- network_pairs[1,i]
+        n_snp_t <- network_pairs[2,i]
+        # if (n_snp == snps){
+        #   snp_block_matrix[snps,1] = n_block
+        # }
+        #else{
+        #matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+(sum(c(c(genotype[,n_snp] == 1.5)+ c(genotype[,start] == 1.5)) == 1 ,na.rm = T)/2)
+        total <- sum(!is.na(genotype[,n_snp_t]+genotype[,start_t]))
+        usable_values <- !is.na(genotype[,n_snp_t]+genotype[,start_t])
+        #similarity <- matches/total
+        p_AB <- (sum(genotype[usable_values,n_snp_t]+genotype[usable_values,start_t] == 0,na.rm = T)+(sum(genotype[usable_values,n_snp_t]+ genotype[usable_values,start_t] == 1 ,na.rm = T)/2)+(sum(genotype[usable_values,n_snp_t]*genotype[usable_values,start_t] == 1 ,na.rm = T)/2))/total
+        p_A <- (sum(genotype[usable_values,n_snp_t] == 0,na.rm = T)+ sum(genotype[usable_values,n_snp_t] == 1,na.rm = T)/2)/total
+        p_a <- 1-p_A
+        p_B <- (sum(genotype[usable_values,start_t] == 0,na.rm = T)+ sum(genotype[usable_values,start_t] == 1,na.rm = T)/2)/total
+        p_b <- 1-p_B
+        #print(c(p_A,p_B,p_AB,start))
+        D <- p_AB-(p_A*p_B)
+        r2 <- D^2/(p_A*p_a*p_B*p_b)
+        r2_values <- c(r2_values,r2)
+        temp_sim <- r2+temp_sim
+        network_size <- network_size + 1
+      }
+      similarity <- temp_sim
+      #print(c(similarity,similarity/network_size,network_size,start,n_snp))
+      if (similarity/network_size >= threshold && network_size < 1001){
+        snp_block_matrix[start,1] = n_block
+        start <- start+1
+        network_size <-0
+        if (start > snps){
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+        }
+      }
+      else {
+        if (start == snps){
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          n_block <- n_block + 1
+          snp_block_matrix[snps,1] <- n_block
+          block_coords[[n_block]] <- c(start,start)
+          start <- start + 1
+        }
+        else{
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          n_snp <- start
+          n_block <- n_block +1
+          snp_block_matrix[start,1] = n_block
+          start <- start +1
+          network_size <- 0
+        }
+      }
+    }
+  }
+  genotype <- as.matrix(genotype)
+  new_genotype <- matrix(0L, nrow = dim(genotype)[1], ncol = n_block)
+  counter <- 0
+  tagging_markers <- c()
+  message("Creating Blocks")
+  for (coords in block_coords){
+    counter <- counter + 1
+    if (coords[1] == coords[2]){
+      new_genotype[,counter] <- genotype[,coords[1]]
+      tagging_markers <- c(tagging_markers,coords[1])
+    }
+    else {
+      selection<- round(median(c(coords[1]:coords[2]))) 
+      new_genotype[,counter] <- genotype[,selection] 
+      tagging_markers <- c(tagging_markers,selection) 
+    }  
+  }
+  output<-list(new_genotype,tagging_markers,snp_block_matrix,r2_values)
+  names(output)<-c("genotype","tagging_genotype","genotype_block_matrix")
+  return(output)
+}
