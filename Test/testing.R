@@ -410,50 +410,53 @@ blocks<-correlation_blocks_running(genotype)
 tail(blocks)
 
 
-correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000){
+correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000){ 
   snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
   rownames(snp_block_matrix) <- colnames(genotype)
   n_snp <- 1
   start <- 2
   n_block <- 1
-  similarity <- 0
   network_size <- 0
   r2_values <- c()
   block_coords <- list()
   snps <- dim(genotype)[2]
   snp_block_matrix[n_snp,] <- n_block
-  while(start <= snps){
+  while(start <= snps){ 
     if (n_snp == snps){
       snp_block_matrix[snps,1] = n_block
     }
-    else{
+    else{ 
       temp_sim <- 0
-      for (i in n_snp:(start-1)){
+      network_pairs<-combn(c(n_snp:(start)),2)
+      for (i in 1:dim(network_pairs)[2]){
+        start_t <- network_pairs[1,i]
+        n_snp_t <- network_pairs[2,i]
         # if (n_snp == snps){
         #   snp_block_matrix[snps,1] = n_block
         # }
         #else{
         #matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+(sum(c(c(genotype[,n_snp] == 1.5)+ c(genotype[,start] == 1.5)) == 1 ,na.rm = T)/2)
-        total <- sum(!is.na(genotype[,n_snp]+genotype[,start]))
-        usable_values <- !is.na(genotype[,n_snp]+genotype[,start])
+        total <- sum(!is.na(genotype[,n_snp_t]+genotype[,start_t]))
+        usable_values <- !is.na(genotype[,n_snp_t]+genotype[,start_t])
         #similarity <- matches/total
-        p_AB <- (sum(genotype[usable_values,n_snp]+genotype[usable_values,start] == 0,na.rm = T)+(sum(genotype[usable_values,n_snp]+ genotype[usable_values,start] == 1 ,na.rm = T)/2)+(sum(genotype[usable_values,n_snp]*genotype[usable_values,start] == 1 ,na.rm = T)/2))/total
-        p_A <- (sum(genotype[usable_values,n_snp] == 0,na.rm = T)+ sum(genotype[usable_values,n_snp] == 1,na.rm = T)/2)/total
+        p_AB <- (sum(genotype[usable_values,n_snp_t]+genotype[usable_values,start_t] == 0,na.rm = T)+(sum(genotype[usable_values,n_snp_t]+ genotype[usable_values,start_t] == 1 ,na.rm = T)/2)+(sum(genotype[usable_values,n_snp_t]*genotype[usable_values,start_t] == 1 ,na.rm = T)/2))/total
+        p_A <- (sum(genotype[usable_values,n_snp_t] == 0,na.rm = T)+ sum(genotype[usable_values,n_snp_t] == 1,na.rm = T)/2)/total
         p_a <- 1-p_A
-        p_B <- (sum(genotype[usable_values,start] == 0,na.rm = T)+ sum(genotype[usable_values,start] == 1,na.rm = T)/2)/total
+        p_B <- (sum(genotype[usable_values,start_t] == 0,na.rm = T)+ sum(genotype[usable_values,start_t] == 1,na.rm = T)/2)/total
         p_b <- 1-p_B
         #print(c(p_A,p_B,p_AB,start))
         D <- p_AB-(p_A*p_B)
         r2 <- D^2/(p_A*p_a*p_B*p_b)
         r2_values <- c(r2_values,r2)
-        temp_sim <- r2
+        temp_sim <- r2+temp_sim
         network_size <- network_size + 1
       }
-      similarity <- similarity + temp_sim
-      #print(c(similarity,similarity/network_size,temp_sim))
+      similarity <- temp_sim
+      print(c(similarity,similarity/network_size,network_size,start,n_snp))
       if (similarity/network_size >= threshold && network_size < 1001){
         snp_block_matrix[start,1] = n_block
         start <- start+1
+        network_size <-0
         if (start > snps){
           block_coords[[n_block]] <- c(n_snp,(start-1))
         }
@@ -472,7 +475,6 @@ correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000
         n_block <- n_block +1
         snp_block_matrix[start,1] = n_block
         start <- start +1
-        similarity <- 0
         network_size <- 0
         }
       }
@@ -503,15 +505,21 @@ correlation_blocks_network <-function(genotype,threshold=0.9,max_block_size=1000
 blocks<-correlation_blocks_network(genotype,0.8)
 
 
+max(table(blocks$genotype_block_matrix))
+
+hist(blocks$r2)
+
 dim(blocks[[1]])
 dim(blocks[[2]])
 tail(blocks[[2]])
 tail(blocks[[1]])
 
 length(blocks$tagging_markers)
-blocks<-blocks$SNP_block_matrix
+blocks<-blocks$genotype_block_matrix
+max(table(blocks))
 
-hist(blocks[[2]])
+
+max(hist(blocks[[2]]))
 dim(blocks[[1]])
 tail(blocks[[3]])
 

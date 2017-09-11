@@ -61,18 +61,38 @@
 #' 
 generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) {
   if (fast.read == T){
-    message("loading ped file")
-    ped <- fread(ped,data.table=F)
-    message("loading tped file")
-    tped <- fread(tped,data.table=F)
+    if (is.character(ped)){
+      message("loading ped file")
+      ped <- fread(ped,data.table=F)
+    }
+    else if (!is.data.frame(ped)){
+      stop("ped file not file or data frame")
+    }
+    if (is.character(tped)){
+      message("loading tped file")
+      ped <- fread(tped,data.table=F)
+    }
+    else if (!is.data.frame(tped)){
+      stop("tped file not file or data frame")
+    }
   }
   else {
-    message("loading ped file")
-    ped <- read.table(ped)
-    message("loading tped file")
-    tped <- read.table(tped)
+    if (is.character(ped)){
+      message("loading ped file")
+      ped <- read.table(ped)
+    }
+    else if (!is.data.frame(ped)){
+      stop("ped file not file or data frame")
+    }
+    if (is.character(tped)){
+      message("loading tped file")
+      ped <- read.table(tped)
+    }
+    else if (!is.data.frame(tped)){
+      stop("tped file not file or data frame")
+    }
   }
-  if ((dim(ped)[1] != (dim(tped)[2]-4)/2) && ((dim(ped)[2]-6)/2 != (dim(tped)[1]))){
+    if ((dim(ped)[1] != (dim(tped)[2]-4)/2) && ((dim(ped)[2]-6)/2 != (dim(tped)[1]))){
     stop("Error: ped-file and tped file dimensions do not fit, make sure file delimiters are consistent")
   } 
   if(is.null(snp.id)){
