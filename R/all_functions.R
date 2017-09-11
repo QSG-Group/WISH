@@ -9,7 +9,8 @@
 #' takes Plink output (1,2-coding) to create the genotype matrix which can be used
 #' to calculate genomic correlations or epistatic interaction effects 
 #' @usage generate.genotype(ped, tped,gwas.p=gwas_pvalues)
-#' @param ped The ped file (.ped) is an input file from Plink: The PED file is a
+#' @param ped Input ped file as .ped file or data.frame. The ped file (.ped) is an 
+#' input file from Plink: The PED file is a
 #' white-space (space or tab) delimited file: the first six columns are mandatory:
 #' Family ID, Idividual ID, Paternal ID, Maternal ID, 
 #' Sex (1=male; 2=female;other=unknown) and Phenotype. The IDs are alphanumeric: 
@@ -20,7 +21,8 @@
 #' (i.e. based on whether a value other than 0, 1, 2 or the missing genotype 
 #' code is observed). SNPs are 1,2-coded (1 for major allele,2 for minor allele) 
 #' For more information: http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml#ped
-#' @param tped The tped file (.tped) is a transposed ped file, from Plink. 
+#' @param tped Input tped file as .tped file or data frame. The tped file (.tped)
+#' is a transposed ped file, from Plink. 
 #' This file contains the SNP and genotype information where one row is a SNP.
 #' The first 4 columns of a TPED file are the same as a 4-column MAP file.
 #' Then all genotypes are listed for all individuals for each particular SNP on 
@@ -70,7 +72,7 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
     }
     if (is.character(tped)){
       message("loading tped file")
-      ped <- fread(tped,data.table=F)
+      tped <- fread(tped,data.table=F)
     }
     else if (!is.data.frame(tped)){
       stop("tped file not file or data frame")

@@ -734,6 +734,9 @@ genotype<-generate.genotype(ped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_p
 genotype<-genotype[!(rownames(genotype) %in% ids_delete[,1]),]
 tped <- fread("/data/nbg153/ADHD/WISH_files_newest/INDICES1_1_2.tped", data.table = F)
 
+ped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_ped", data.table = F)
+tped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_tped", data.table = F)
+genotype<-generate.genotype(ped = ped,tped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_tped",major.freq = 0.9)
 
 new_geno <- cbind(genotype,genotype,genotype)
 
