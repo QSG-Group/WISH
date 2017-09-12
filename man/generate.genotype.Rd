@@ -7,7 +7,8 @@
 generate.genotype(ped, tped,gwas.p=gwas_pvalues)
 }
 \arguments{
-\item{ped}{The ped file (.ped) is an input file from Plink: The PED file is a
+\item{ped}{Input ped file as .ped file or data.frame. The ped file (.ped) is an 
+input file from Plink: The PED file is a
 white-space (space or tab) delimited file: the first six columns are mandatory:
 Family ID, Idividual ID, Paternal ID, Maternal ID, 
 Sex (1=male; 2=female;other=unknown) and Phenotype. The IDs are alphanumeric: 
@@ -19,7 +20,8 @@ column: PLINK will automatically detect which type
 code is observed). SNPs are 1,2-coded (1 for major allele,2 for minor allele) 
 For more information: http://pngu.mgh.harvard.edu/~purcell/plink/data.shtml#ped}
 
-\item{tped}{The tped file (.tped) is a transposed ped file, from Plink. 
+\item{tped}{Input tped file as .tped file or data frame. The tped file (.tped)
+is a transposed ped file, from Plink. 
 This file contains the SNP and genotype information where one row is a SNP.
 The first 4 columns of a TPED file are the same as a 4-column MAP file.
 Then all genotypes are listed for all individuals for each particular SNP on 
