@@ -487,10 +487,12 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,g
     epi_pvalue <-   snp_matrix[seq(2,nrow(snp_matrix),2),]
     epi_cor_t <- t(epi_cor)
     epi_pvalue_t <- t(epi_pvalue)
-    diag(epi_cor_t) <- 0
-    diag(epi_pvalue_t) <- 1
+    #diag(epi_cor_t) <- 0
+    #diag(epi_pvalue_t) <- 1
     epi_cor_t[upper.tri(epi_cor_t)]<- epi_cor[upper.tri(epi_cor)]
     epi_pvalue_t[upper.tri(epi_pvalue_t)]<- epi_pvalue[upper.tri(epi_pvalue)]
+    diag(epi_cor_t) <- 0
+    diag(epi_pvalue_t) <- 1
     colnames(epi_pvalue_t) <- colnames(genotype)
     rownames(epi_pvalue_t) <- colnames(genotype)
     colnames(epi_cor_t) <- colnames(genotype)
@@ -683,6 +685,9 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 #' epistatic.correlation()
 #' @param power Powers to test for creating scale free network. Only change if the default
 #' values don't work
+#' @param values  Character which can be "Pvalues" or "Coefficients"
+#' Indicating if P-values or Coefficients should be used for analysis.
+#' The recomended and defualt values is Coefficients
 #' @param n.snps Number of SNPs to select. SNPs are selected by connectivity, so 500 will
 #' select the top 500 most connected Snps. Default is to use all
 #' @param minClusterSize Minimum module (cluster) size. Default, is 50, but changing this may
