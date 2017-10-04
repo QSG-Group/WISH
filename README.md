@@ -9,6 +9,12 @@ Install WISH with the following commands:
 For Linux/Mac Users:
 
 ```
+### Installing WGCNA first
+install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival"))
+source("http://bioconductor.org/biocLite.R")
+biocLite()
+biocLite(c("GO.db", "preprocessCore", "impute"))
+install.packages("WGCNA")
 ### Instaling devtools
 install.packages(c("devtools","curl", "httr"))
 ### Install WISH
