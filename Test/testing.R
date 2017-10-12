@@ -371,7 +371,7 @@ sum(blocks[,1] == 1)
 woot<-sort((table(blocks)),decreasing = T)
 woot[1:100]
 
-correlation_blocks_running <-function(genotype,threshold=0.9){
+correlation_blocks_running <-function(genotype,threshold=0.9){ 
   snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
   rownames(snp_block_matrix) <- colnames(genotype)
   n_snp <- 1
@@ -1291,12 +1291,12 @@ hist(effect_test)
 
 
 
-#' Function to plot summary pseudo-manhattan plots of variants.
-#' @description Visualize summary statistics for interactions based on total sum 
-#' of -loglikelihoods for each variant across all interactions og the sum of
-#' effect sizes.
-#' @imports ggplot2 
-#' @usage pseudo_manahattan(tped,correlations)
+
+ 
+#' Function for summarizing individual variant epistasis results 
+#' @description Extract summary information from the epistasis analysis 
+#' for each variant
+#' @usage variant_summary(tped,correlations)
 #' @param tped Input tped file as .tped file or data frame. The tped file (.tped)
 #' is a transposed ped file, from Plink. 
 #' This file contains the SNP and genotype information where one row is a SNP.
@@ -1312,47 +1312,7 @@ hist(effect_test)
 #' @export
 
 
-pseudo_manhattan<- function(tped,correlations,values="p"){
-    if (is.character(tped)){
-      message("loading tped file")
-      tped <- fread(tped,data.table=F)
-    }
-    map<-tped[tped[,2] %in% rownames(correlations$Pvalues),1:2]
-  if ((sum(map[,2] == rownames(correlations$Pvalues)))== dim(correlations$Pvalues)[1]){
-    if (values=="p"){
-      likelyhood_sum <- colSums(-log(correlations$Pvalues))
-      #plot(1:length(likelyhood_sum),likelyhood_sum,col=map[,1]%%2+3,xlab="N-variant",ylab="Sum of log-likelihood",main="Pseudo-Manhattan Plot")
-      data_p<-as.data.frame(cbind(likelyhood_sum,c(1:length(likelyhood_sum)),map[,1]))
-      colnames(data_p)<-c("like_sum","Nvar","chr")
-      data_p$chr <- as.factor(data_p$chr)
-      gg<-ggplot(data_p,aes(x=Nvar, y=like_sum,col=chr ))+ geom_point()+
-      ggtitle("Pseudo-Manhattan Plot")+
-        xlab("N-variant")+
-        ylab("Sum of -log-likelihood")
-      gg <- gg+guides(col=F)
-      return(gg)
-      }
-    if (values=="c"){
-      likelyhood_sum <- colSums(abs(correlations$Coefficients))
-      data_p<-as.data.frame(cbind(likelyhood_sum,c(1:length(likelyhood_sum)),map[,1]))
-      colnames(data_p)<-c("like_sum","Nvar","chr")
-      data_p$chr <- as.factor(data_p$chr)
-      gg<-ggplot(data_p,aes(x=Nvar, y=like_sum,col=chr ))+ geom_point()+
-        ggtitle("Pseudo-Manhattan Plot")+
-        xlab("N-variant")+
-        ylab("Sum of Effect Sizes")
-      gg <- gg+guides(col=F)
-      return(gg)
-    }
-    }
-  else{
-    message("tped and model output variant names do not match")
-    }
-  }
- 
-
-
-variant_matrix <- function(tped,correlations) {
+summary_matrix <- function(tped,correlations) {
   matrix_base <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,2,4)]
   likelyhood_sum <- colSums(-log(correlations$Pvalues))
   effect_sum <- colSums(abs(correlations$Coefficients))
@@ -1458,8 +1418,93 @@ epistatic.correlation(phenotypes,threads = 40,genotype,simple = F,test=F)
 class(tped)
 
 genome.interaction(tped,model_GIFT)
-(1,2,"../caw_project/GIFT_final2.tped",model_GIFT)
+
+pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {  
+  new_P <- (1-correlations$Pvalues)
+  message("loading tped file")
+  tped <- fread(tped,data.table=F)
+  total_map <- tped[tped[,2] %in% rownames(correlations$Coefficients),c(1,4)]
+  total_map[,2] <- as.numeric(total_map[,2])
+  snps1<-c(which(total_map[,1] == chr1))
+  snps2 <-c(which(total_map[,1] == chr2))
+  values <- abs(correlations$Pvalues[snps1,snps2])
+  #values <- -log(values)
+  #threshold<-quantile(values,0.95)
+  #values[values < threshold] <- 0
+  
+  heatmap3(values,Rowv = NA,Colv = NA)
+}
+pairwise.chr.map(1,2,"../caw_project/GIFT_final2.tped",model_GIFT)
+
+hist(model_GIFT$Coefficients)
+
+#heatmap3(visualization_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(chromosome_choords1)[1]-2),"end"),labCol=c("start",rep("",dim(chromosome_choords2)[1]-2),"end"))
 
 
 
 
+
+
+
+#' Function to plot summary pseudo-manhattan plots of variants.
+#' @description Visualize summary statistics for interactions based on total sum 
+#' of -loglikelihoods for each variant across all interactions og the sum of
+#' effect sizes.
+#' @import ggplot2 
+#' @usage pseudo_manahattan(tped,correlations)
+#' @param tped Input tped file as .tped file or data frame. The tped file (.tped)
+#' is a transposed ped file, from Plink. 
+#' This file contains the SNP and genotype information where one row is a SNP.
+#' The first 4 columns of a TPED file are the same as a 4-column MAP file.
+#' Then all genotypes are listed for all individuals for each particular SNP on 
+#' each line. Again, SNPs are 1,2-coded.#'
+#' @param correlations List of epistatic correlations and p-values generated by
+#' epistatic.correlation()
+#' @return Plots a pseudo manhattan plot
+#' @examples
+#' pseudo_manahattan(tped,correlations)
+#' 
+#' @export
+
+
+pseudo_manhattan<- function(tped,correlations,values="p"){
+  if (is.character(tped)){
+    message("loading tped file")
+    tped <- fread(tped,data.table=F)
+  }
+  map<-tped[tped[,2] %in% rownames(correlations$Pvalues),1:2]
+  if ((sum(map[,2] == rownames(correlations$Pvalues)))== dim(correlations$Pvalues)[1]){
+    if (values=="p"){
+      likelyhood_sum <- colSums(-log(correlations$Pvalues))
+      #plot(1:length(likelyhood_sum),likelyhood_sum,col=map[,1]%%2+3,xlab="N-variant",ylab="Sum of log-likelihood",main="Pseudo-Manhattan Plot")
+      data_p<-as.data.frame(cbind(likelyhood_sum,c(1:length(likelyhood_sum)),map[,1]))
+      colnames(data_p)<-c("like_sum","Nvar","chr")
+      data_p$chr <- as.factor(data_p$chr)
+      gg<-ggplot(data_p,aes(x=Nvar, y=like_sum,col=chr ))+ geom_point()+
+        ggtitle("Pseudo-Manhattan Plot")+
+        xlab("N-variant")+
+        ylab("Sum of -log-likelihood")
+      gg <- gg+guides(col=F)
+      return(gg)
+    }
+    if (values=="c"){
+      likelyhood_sum <- colSums(abs(correlations$Coefficients))
+      data_p<-as.data.frame(cbind(likelyhood_sum,c(1:length(likelyhood_sum)),map[,1]))
+      colnames(data_p)<-c("like_sum","Nvar","chr")
+      data_p$chr <- as.factor(data_p$chr)
+      gg<-ggplot(data_p,aes(x=Nvar, y=like_sum,col=chr ))+ geom_point()+
+        ggtitle("Pseudo-Manhattan Plot")+
+        xlab("N-variant")+
+        ylab("Sum of Effect Sizes")
+      gg <- gg+guides(col=F)
+      return(gg)
+    }
+  }
+  else{
+    message("tped and model output variant names do not match")
+  }
+}
+
+#' * genotype The tagging genotypes selected from the blocks
+#' * tagging_genotype The genotype selected to represent each block. The median genotype, rounded down is selected
+#' * genotype_block_matrix A matrix indicating which block each genotype belongs to

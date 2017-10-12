@@ -17,11 +17,13 @@ value allowed.}
 }
 \value{
 Returns a named list with the following objects:
-\itemize{
- \item{""genotype""}{The tagging genotypes selected from the blocks}
- \item{"tagging_genotype"}{The genotype selected to represent each block. The median genotype, rounded down is selected}
- \item{"genotype_block_matrix"}{A matrix indicating which block each genotype belongs to}
+\describe{
+\item{genotype} {The tagging genotypes selected from the blocks}
+\item{tagging_genotype} {The genotype selected to represent each block. The median genotype, rounded down is selected}
+\item{genotype_block_matrix} {A matrix indicating which block each genotype belongs to}
 }
+
+Returns a named list with the following objects:
 }
 \description{
 Given an input set of genotypes from the generate.genotype() function, this function
@@ -33,5 +35,4 @@ block the median genotype in block will be selected as a tagging genotype.
 }
 \examples{
  LD_blocks(genotype,threshold,max_blocksize)
-
 }

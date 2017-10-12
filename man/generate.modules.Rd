@@ -30,15 +30,15 @@ be recommended in case of sparse SNPs}
 \value{
 Plots the network connectivity and the scale and SNP tree clustering with modules found. 
 Returns a named list with all the data generated:
-\itemize{
- \item{"SNPs"}{SNPs used in the analysis and their correlations}
- \item{"connectivity"}{The connectivity matrix of the SNPs}
- \item{"adjMat"}{The adjacency matrix of the SNPs}
- \item{"dissTom"}{The dissimilarity TOM}
- \item{"genetree"}{The clustering object used for the genetree}
- \item{"modules"}{The module numbers for each SNP, in order of the SNP matrix}
- \item{"modulcolors"}{The colors used in the modules for each SNP}
- \item{"power.estimate"}{The power estimate to generate a scale free network}
+\describe{
+ \item{SNPs}{SNPs used in the analysis and their correlations}
+ \item{connectivity}{The connectivity matrix of the SNPs}
+ \item{adjMat}{The adjacency matrix of the SNPs}
+ \item{dissTom}{The dissimilarity TOM}
+ \item{genetree}{The clustering object used for the genetree}
+ \item{modules}{The module numbers for each SNP, in order of the SNP matrix}
+ \item{modulcolors}{The colors used in the modules for each SNP}
+ \item{power.estimate}{The power estimate to generate a scale free network}
 }
 }
 \description{

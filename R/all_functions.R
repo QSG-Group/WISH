@@ -641,7 +641,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
   ends <- c()
   for (snp in map[,2]){   
     if ( snp < (first_snp+progress*10^6)) {
-      print("!t")
+      #print("!t")
       starts <- 1
       row <- 1
     }
@@ -649,7 +649,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
       while (snp > first_snp+(progress+1)*10^6) {
         progress <- progress +1
       }
-      print("what")
+      #print("what")
       ends <- c(ends,row)
       row <- row +1
       starts <- c(starts,row)
@@ -701,15 +701,15 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 #' @param threads Number of threads to use if parallelization is possible.
 #' @return Plots the network connectivity and the scale and SNP tree clustering with modules found. 
 #' Returns a named list with all the data generated:
-#' \itemize{
-#'  \item{"SNPs"}{SNPs used in the analysis and their correlations}
-#'  \item{"connectivity"}{The connectivity matrix of the SNPs}
-#'  \item{"adjMat"}{The adjacency matrix of the SNPs}
-#'  \item{"dissTom"}{The dissimilarity TOM}
-#'  \item{"genetree"}{The clustering object used for the genetree}
-#'  \item{"modules"}{The module numbers for each SNP, in order of the SNP matrix}
-#'  \item{"modulcolors"}{The colors used in the modules for each SNP}
-#'  \item{"power.estimate"}{The power estimate to generate a scale free network}
+#' \describe{
+#'  \item{SNPs}{SNPs used in the analysis and their correlations}
+#'  \item{connectivity}{The connectivity matrix of the SNPs}
+#'  \item{adjMat}{The adjacency matrix of the SNPs}
+#'  \item{dissTom}{The dissimilarity TOM}
+#'  \item{genetree}{The clustering object used for the genetree}
+#'  \item{modules}{The module numbers for each SNP, in order of the SNP matrix}
+#'  \item{modulcolors}{The colors used in the modules for each SNP}
+#'  \item{power.estimate}{The power estimate to generate a scale free network}
 #' }
 #' @examples
 #'  generate.modules(correlations)
@@ -779,14 +779,14 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
 #' value allowed. 
 #' @param max_block_size The maximum block size allowed.  
 #' @return Returns a named list with the following objects:
-#' \itemize{
-#'  \item{""genotype""}{The tagging genotypes selected from the blocks}
-#'  \item{"tagging_genotype"}{The genotype selected to represent each block. The median genotype, rounded down is selected}
-#'  \item{"genotype_block_matrix"}{A matrix indicating which block each genotype belongs to}
-#' }
+#' \describe{
+#' \item{genotype} {The tagging genotypes selected from the blocks}
+#' \item{tagging_genotype} {The genotype selected to represent each block. The median genotype, rounded down is selected}
+#' \item{genotype_block_matrix} {A matrix indicating which block each genotype belongs to}
+#' } 
+#' @return Returns a named list with the following objects:
 #' @examples
 #'  LD_blocks(genotype,threshold,max_blocksize)
-#' 
 #' @export
 
 
@@ -941,3 +941,7 @@ pseudo_manhattan<- function(tped,correlations,values="p"){
     message("tped and model output variant names do not match")
   }
 }
+
+
+
+
