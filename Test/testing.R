@@ -1436,6 +1436,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 }
 pairwise.chr.map(1,2,"../caw_project/GIFT_final2.tped",model_GIFT)
 
+
 hist(model_GIFT$Coefficients)
 
 #heatmap3(visualization_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(chromosome_choords1)[1]-2),"end"),labCol=c("start",rep("",dim(chromosome_choords2)[1]-2),"end"))
@@ -1508,3 +1509,12 @@ pseudo_manhattan<- function(tped,correlations,values="p"){
 #' * genotype The tagging genotypes selected from the blocks
 #' * tagging_genotype The genotype selected to represent each block. The median genotype, rounded down is selected
 #' * genotype_block_matrix A matrix indicating which block each genotype belongs to
+
+
+pig_fe <-read.table("/data/nbg153/FeedOmics/phenotypes.txt")
+
+
+
+gener
+
+

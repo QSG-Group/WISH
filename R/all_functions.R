@@ -569,7 +569,7 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
     for (j in 1:length(starts)){
       subset <- c(new_P[coord_splits[i,1]:coord_splits[i,2],coord_splits[j,1]:coord_splits[j,2]])
       subset <- abs(subset)
-      visualization_matrix[i,j] <- quantile(subset,quantile)
+      visualization_matrix[i,j] <- quantile(subset,quantile,na.rm=T)
     }
   }
   visualization_matrix <- 2*(visualization_matrix-min(visualization_matrix))/(max(visualization_matrix)-min(visualization_matrix))-1
