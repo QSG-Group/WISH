@@ -44,6 +44,10 @@ library("devtools")
 install_github("QSG-Group/WISH")
 ```
 For the reference manual see the WISH.pdf file
+# Test files
+
+The files test.ped, test.tped and test_pheno.txt show how you have to structure your input files
+and allow you to test the comands.
 
 # Quick Start
 For using WISH you need to have your genotype data in the plink format.
