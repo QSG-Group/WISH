@@ -6,7 +6,7 @@ Weighted Interaction SNP Hub R Package
 
 Install WISH with the following commands:
 
-For Linux/Mac Users:
+For All users Users:
 
 ```
 ### Installing WGCNA first
@@ -22,7 +22,7 @@ library("devtools")
 install_github("QSG-Group/WISH")
 ```
 
-For Windows Users ( or if above does not work):
+If there are problems try this way:
 
 ```
 ### Instaling devtools
@@ -73,12 +73,34 @@ details on filtering. We would recomend to somewhat maximise the number of inter
 with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and more is possible
 with strong computing facilities.
 
+***Loading data into R:***
+
+The functions in the WISH R package accept both filepaths or data frames as input. To load the data easily into R
+use following commands:
+```
+library(data.table)
+ped <- tped <- fread(<filepath to pedfile>, data.table = F)
+tped <- fread(<filepath to tpedfile>, data.table = F)
+```
+If memory load is a problem it is recommended to use the file paths, as the working enviroment
+is duplicated when using multiple threads.
+
 
 ```
 genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
 ```
 
 ***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading time significantly.  You can also increase your stacklimit using ulimit in the command line,but do this only if you know what you are doing. 
+
+
+***LD-Filtetring***
+There is the option of applying LD filtering using the LD_blocks function after generating the genotype matrix.
+Note that this requires that the input data is sorted by chromosome and coordinate to work properly. Read the 
+manual discription of the function for more detail.
+```
+LD_genotype<-LD_blocks(genotype)
+genotype <- LD_genotype$genotype
+```
 
 After generating the genotypes file it is recomended to run a test run to estimate run time
 of the epistatic interaction calculation based on available computing setup:
