@@ -77,7 +77,7 @@ with strong computing facilities.
 
 We recommend prefiltering your data using a main effect filter. For example you can run a simple GWAS using plink:
 
-plink --file <ped file basename> --linear --o <output basename>
+plink --file \<ped file basename\> --linear --o \<output basename\>
 
 The computed p-values can be used in R as filter. 
 
