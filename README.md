@@ -73,7 +73,7 @@ details on filtering. We would recomend to somewhat maximise the number of inter
 with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and more is possible
 with strong computing facilities.
 
-***Loading data into R:***
+***Loading data into R***
 
 The functions in the WISH R package accept both filepaths or data frames as input. To load the data easily into R
 use following commands:
@@ -94,6 +94,7 @@ genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.i
 
 
 ***LD-Filtetring***
+
 There is the option of applying LD filtering using the LD_blocks function after generating the genotype matrix.
 Note that this requires that the input data is sorted by chromosome and coordinate to work properly. Read the 
 manual discription of the function for more detail.
@@ -102,27 +103,32 @@ LD_genotype<-LD_blocks(genotype)
 genotype <- LD_genotype$genotype
 ```
 
+***Epistatic Analysis***
+
 After generating the genotypes file it is recomended to run a test run to estimate run time
 of the epistatic interaction calculation based on available computing setup:
 ```
 epistatic.correlation(<phenotype dataframe>, genotype,threads = <number of cores available> ,test=T)
 ```
-This will give you a indication of expected run time given your input. The next step is to run the analysis:
+
+This will give you an order of magnitude of the expected run time given your input, but not exact time. The next step is to run the analysis:
 We recommend using simple=F for better results:
 ```
 correlations<-epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=F,simple=F)
 ```
-Once you have calculated epistatic correlations you can get a course grained overview of the results using
+Once you have calculated epistatic correlations you can get a coarse grained overview of the results using
 the genome.interaction() function:
 ```
 genome.interaction(<input tped file>, correlations)
 ```
-If you want to compare individual chromosomes see the pairwise.chr.map() function
 
 Finally to create modules of interacting markers use the generate.modules function:
 ```
 modules <-generate.modules(correlations)
 ```
+
+The modules object includes a large range of outputs from the network analysis. 
+
 ***warning*** If you have epistatic correlation coefficients values that are strong outliers this can heavily affect
 this step or even make it fail. Thus it is recommended to set those coefficients to 0, for example if we only want 
 coefficients between 1000 and -1000:
