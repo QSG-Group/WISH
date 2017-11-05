@@ -27,6 +27,14 @@ The first 4 columns of a TPED file are the same as a 4-column MAP file.
 Then all genotypes are listed for all individuals for each particular SNP on 
 each line. Again, SNPs are 1,2-coded.}
 
+\item{coding}{Either linear or binary. 
+\describe{
+\item{binary}{Variants are 0,1,2 coded: 0 for homozygous for the major 
+allele, 1 for heterozygous, and 2 for homozygous for the minor allele.}
+\item{linear}{SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
+allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele.}
+}}
+
 \item{snp.id}{Input SNP ids to use in analysis if not all snps are to be used}
 
 \item{pvalue}{A value for the cutoff of the SNPs which should be remained 
@@ -51,11 +59,9 @@ file. This can be increased by changing the stack size (do this only if you
 know what you are doing)}
 }
 \value{
-A genotype dataframe and the corresponding vector of passing snps in a vector.
+A genotype dataframe and the corresponding vector of passing variants.
 The genotype data frame has a row for each individual and a column
- for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
- allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
- Missing values are NA coded.
+ for each variant. Variant are coded according to the coding parameter
 }
 \description{
 For network construction based on both genomic correlations

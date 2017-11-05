@@ -27,6 +27,13 @@
 #' The first 4 columns of a TPED file are the same as a 4-column MAP file.
 #' Then all genotypes are listed for all individuals for each particular SNP on 
 #' each line. Again, SNPs are 1,2-coded.
+#' @param coding Either linear or binary. 
+#'  \describe{
+#'  \item{binary}{Variants are 0,1,2 coded: 0 for homozygous for the major 
+#'  allele, 1 for heterozygous, and 2 for homozygous for the minor allele.}
+#'  \item{linear}{SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
+#'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele.}
+#'  }
 #' @param snp.id  Input SNP ids to use in analysis if not all snps are to be used
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
 #' in the matrix, based on the pvalue resulting from the GWAS. Default value
@@ -44,11 +51,9 @@
 #' in the ped and tped file, and a maximum of approximately 950.000 colums in the ped
 #' file. This can be increased by changing the stack size (do this only if you
 #' know what you are doing)
-#' @return A genotype dataframe and the corresponding vector of passing snps in a vector.
+#' @return A genotype dataframe and the corresponding vector of passing variants.
 #' The genotype data frame has a row for each individual and a column
-#'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
-#'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
-#'  Missing values are NA coded. 
+#'  for each variant. Variant are coded according to the coding parameter
 #' @references Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
 #' Weighted Interaction SNP Hub (WISH) network method for building genetic
 #' networks for complex diseases and traits using whole genome genotype data.
@@ -61,7 +66,7 @@
 #' 
 #' 
 #' 
-generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) {
+generate.genotype <- function(ped,tped,coding="binary",snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) { 
   if (fast.read == T){
     if (is.character(ped)){
       message("loading ped file")
@@ -169,10 +174,16 @@ generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,g
   #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
   passing_snps <- which((colSums((genotype == 2),na.rm = T) < (dim(genotype)[1]*major.freq)) & colSums(is.na(genotype)) < (0.05*dim(genotype)[1]))
   genotype <- genotype[,passing_snps]
-  genotype[genotype==2] <- 0
-  genotype[genotype==1] <- 4
-  genotype[genotype==1.5] <- 1
-  genotype[genotype==4] <- 2
+  if(coding=="linear"){
+    genotype[genotype==2] <- 3
+    genotype[genotype==1] <- 2
+    genotype[genotype==3] <-1
+  }
+  if (coding=="binary"){
+    genotype[genotype==2] <- 0
+    genotype[genotype==1] <- 2
+    genotype[genotype==1.5] <- 1
+  }
   message(paste(length(passing_snps), "passed QC"), sep=" ")
   return(genotype)
 }
@@ -511,8 +522,8 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,g
 #' chromosome pair, scaled to 1 to -1. 
 #' @import corrplot
 #' @usage genome.interaction(tped,correlations)
-#' @param tped The tped file used in generate.genotype(). The SNPs must
-#' be sorted by chromosome, matching the order of the SNPs in the correlation 
+#' @param tped The tped file used in generate.genotype(). The variants must
+#' be sorted by chromosome, matching the order of the variants in the correlation 
 #' matrices. 
 #' @param correlations List of epistatic correlations and p-values genrated by
 #' epistatic.correlation()
@@ -582,7 +593,7 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
 #' statistical significance. The value is based of the most signficant epistatic interaction in each
 #' region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-#' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+#' 1 Mb regions, but if variants are more spaced out that this it will adjust to the smallest region that fit
 #' the data.  
 #' @import heatmap3
 #' @usage pairwise.chr.map(chr1,chr2,tped,correlations,span)

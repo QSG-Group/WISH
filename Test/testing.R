@@ -731,13 +731,16 @@ system2("ulimit","-s 16384")
 system("ulimit -s")
 ids_delete <- read.table("/data/nbg153/ADHD/WISH_files_newest/IDs_delete.txt")
 phenotype <- read.table("//data/nbg153/ADHD/WISH_files_newest/pheno_for_victor.txt",header = T)
-genotype<-generate.genotype(ped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_ped",tped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_tped",major.freq = 0.9)
+genotype<-generate.genotype(ped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_ped",tped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_tped",major.freq = 0.9,coding="linear")
 genotype<-genotype[!(rownames(genotype) %in% ids_delete[,1]),]
 tped <- fread("/data/nbg153/ADHD/WISH_files_newest/INDICES1_1_2.tped", data.table = F)
 
 dim(genotype)
 ped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_ped", data.table = F)
 tped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_tped", data.table = F)
+
+
+
 genotype<-generate.genotype(ped = ped,tped = "/data/nbg153/ADHD/WISH_files_newest/trimmed_tped",major.freq = 0.9)
 
 new_geno <- cbind(genotype,genotype,genotype)
@@ -1515,6 +1518,44 @@ pig_fe <-read.table("/data/nbg153/FeedOmics/phenotypes.txt")
 
 
 
-gener
+
+ped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_ped", data.table = F)
+tped <- fread("/data/nbg153/ADHD/WISH_files_newest/trimmed_tped", data.table = F)
+
+dim(ped)
+
+ped_small <- ped[,1:5006] 
+tped_small <- tped[1:2500,]
+
+
+names <- c()
+for (i in 1:dim(ped)[1]){
+  names <- c(names, paste("sample",as.character(i),sep=""))
+}
+names
+
+
+snp_names <- c()
+for (i in 1:dim(tped_small)[1]){
+  snp_names <- c(snp_names, paste("snp",as.character(i),sep=""))
+}
+snp_names
+
+
+
+tped_small[,2] <- snp_names
+ped_small[,2] <- names
+
+
+phenotype <-round(runif(203,1,100)) 
+
+data<-as.data.frame(cbind(names,phenotype))
+
+write.table(ped_small,"/data/nbg153/ADHD/WISH_files_newest/test.ped",col.names=F,row.names=F,quote=F)
+write.table(tped_small,"/data/nbg153/ADHD/WISH_files_newest/test.tped",col.names=F,row.names=F,quote=F)
+write.table(data,"/data/nbg153/ADHD/WISH_files_newest/test_pheno.txt",col.names=F,row.names=F,quote=F)
+
+
+
 
 

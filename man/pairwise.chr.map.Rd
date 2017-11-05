@@ -30,7 +30,7 @@ Outputs a plot visualizing the pairwise chromosome region interaction
 Visualization of chromosome pairwise region epistatic interaction strength, based on 
 statistical significance. The value is based of the most signficant epistatic interaction in each
 region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+1 Mb regions, but if variants are more spaced out that this it will adjust to the smallest region that fit
 the data.
 }
 \examples{

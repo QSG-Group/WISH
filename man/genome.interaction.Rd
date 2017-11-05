@@ -7,8 +7,8 @@
 genome.interaction(tped,correlations)
 }
 \arguments{
-\item{tped}{The tped file used in generate.genotype(). The SNPs must
-be sorted by chromosome, matching the order of the SNPs in the correlation 
+\item{tped}{The tped file used in generate.genotype(). The variants must
+be sorted by chromosome, matching the order of the variants in the correlation 
 matrices.}
 
 \item{correlations}{List of epistatic correlations and p-values genrated by
