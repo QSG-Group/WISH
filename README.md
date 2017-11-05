@@ -73,6 +73,14 @@ details on filtering. We would recomend to somewhat maximise the number of inter
 with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and more is possible
 with strong computing facilities.
 
+***Data Pre-filtering***
+
+We recommend prefiltering your data using a main effect filter. For example you can run a simple GWAS using plink:
+
+plink --file <ped file basename> --linear --o <output basename>
+
+The computed p-values can be used in R as filter. 
+
 ***Loading data into R***
 
 The functions in the WISH R package accept both filepaths or data frames as input. To load the data easily into R
@@ -84,10 +92,11 @@ tped <- fread(<filepath to tpedfile>, data.table = F)
 ```
 If memory load is a problem it is recommended to use the file paths, as the working enviroment
 is duplicated when using multiple threads.
-
+There is no strict guideline for the p-value threshold, but 
+given fairly standard server computing facilites using a p-value that filters down to 10.000-20.000 variants is reasonable.
 
 ```
-genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
+genotype <-generate.genotype(<input ped>,<input tped>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
 ```
 
 ***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading time significantly.  You can also increase your stacklimit using ulimit in the command line,but do this only if you know what you are doing. 
