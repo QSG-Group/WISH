@@ -6,7 +6,7 @@ Weighted Interaction SNP Hub R Package
 
 Install WISH with the following commands:
 
-For Linux/Mac Users:
+For All users Users:
 
 ```
 ### Installing WGCNA first
@@ -22,7 +22,7 @@ library("devtools")
 install_github("QSG-Group/WISH")
 ```
 
-For Windows Users ( or if above does not work):
+If there are problems try this way:
 
 ```
 ### Instaling devtools
@@ -44,6 +44,10 @@ library("devtools")
 install_github("QSG-Group/WISH")
 ```
 For the reference manual see the WISH.pdf file
+# Test files
+
+The files test.ped, test.tped and test_pheno.txt show how you have to structure your input files
+and allow you to test the comands.
 
 # Quick Start
 For using WISH you need to have your genotype data in the plink format.
@@ -69,34 +73,71 @@ details on filtering. We would recomend to somewhat maximise the number of inter
 with 10.000-20.000 SNPs being fairly easy with to run with ~10-15 cores, and more is possible
 with strong computing facilities.
 
+***Data Pre-filtering***
+
+We recommend prefiltering your data using a main effect filter. For example you can run a simple GWAS using plink:
+
+plink --file <ped file basename> --linear --o <output basename>
+
+The computed p-values can be used in R as filter. 
+
+***Loading data into R***
+
+The functions in the WISH R package accept both filepaths or data frames as input. To load the data easily into R
+use following commands:
+```
+library(data.table)
+ped <- tped <- fread(<filepath to pedfile>, data.table = F)
+tped <- fread(<filepath to tpedfile>, data.table = F)
+```
+If memory load is a problem it is recommended to use the file paths, as the working enviroment
+is duplicated when using multiple threads.
+There is no strict guideline for the p-value threshold, but 
+given fairly standard server computing facilites using a p-value that filters down to 10.000-20.000 variants is reasonable.
 
 ```
-genotype <-generate.genotype(<input ped file path>,<input tped file path>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
+genotype <-generate.genotype(<input ped>,<input tped>,gwas.id=<selected list of id>,gwas.p=<p-values of input SNPs>)
 ```
 
 ***warning*** If you have more than about 1 million SNPs you must either fast.read = F which will slow down the loading time significantly.  You can also increase your stacklimit using ulimit in the command line,but do this only if you know what you are doing. 
+
+
+***LD-Filtetring***
+
+There is the option of applying LD filtering using the LD_blocks function after generating the genotype matrix.
+Note that this requires that the input data is sorted by chromosome and coordinate to work properly. Read the 
+manual discription of the function for more detail.
+```
+LD_genotype<-LD_blocks(genotype)
+genotype <- LD_genotype$genotype
+```
+
+***Epistatic Analysis***
 
 After generating the genotypes file it is recomended to run a test run to estimate run time
 of the epistatic interaction calculation based on available computing setup:
 ```
 epistatic.correlation(<phenotype dataframe>, genotype,threads = <number of cores available> ,test=T)
 ```
-This will give you a indication of expected run time given your input. The next step is to run the analysis:
+
+This will give you an order of magnitude of the expected run time given your input, but not exact time. The next step is to run the analysis:
 We recommend using simple=F for better results:
 ```
 correlations<-epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=F,simple=F)
 ```
-Once you have calculated epistatic correlations you can get a course grained overview of the results using
+Once you have calculated epistatic correlations you can get a coarse grained overview of the results using
 the genome.interaction() function:
 ```
 genome.interaction(<input tped file>, correlations)
 ```
-If you want to compare individual chromosomes see the pairwise.chr.map() function
 
 Finally to create modules of interacting markers use the generate.modules function:
 ```
 modules <-generate.modules(correlations)
 ```
+
+The modules object includes a large range of outputs from the network analysis. 
+
 ***warning*** If you have epistatic correlation coefficients values that are strong outliers this can heavily affect
 this step or even make it fail. Thus it is recommended to set those coefficients to 0, for example if we only want 
 coefficients between 1000 and -1000:
