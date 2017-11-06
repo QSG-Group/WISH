@@ -1330,12 +1330,63 @@ summary_matrix <- function(tped,correlations) {
 pseudo_manhattan(tped,model_GIFT,values="c") 
 test<-variant_matrix(tped,model_GIFT)
 
-  tped<-data.table::fread("../caw_project/GIFT_final2.tped",data.table = F)
+tped<-data.table::fread("../caw_project/GIFT_final2.tped",data.table = F)
 
-tped <- tped[!(tped$V1 %in%  c(0,28,29,30,31,32,33)),]
+tped <- tped[!(tped$V1 %in%  c(0,23,24,25,26,27,28,29,30,31,32,33)),]
 
 load("../../nbg153/caw_project/model_GIFT.RData")
 correlations <- model_GIFT
+genome.interaction <- function(tped,correlations,quantile=0.9) {
+  if (is.character(tped)){
+    message("loading tped file")
+    tped <- fread(tped,data.table=F)
+  }
+  else if (!is.data.frame(tped)){
+    stop("tped file not file or data frame")
+  }
+  new_P <- (1-correlations$Pvalues)
+  map<-tped[tped[,2] %in% rownames(correlations$Pvalues),1:2]
+  counter = 0
+  ends <- c()
+  chr_list <- c()
+  for (i in map[,1]){
+    if (counter == 0){
+      counter <- counter + 1
+      starts <- 1
+      chr <- i
+      chr_list <- c(chr_list,chr)
+    }
+    else {
+      if (chr == i){
+        counter <- counter + 1 
+        if (counter == dim(map)[1]){
+          ends <- c(ends,counter)
+        }
+      }
+      if (chr != i){
+        chr <- i
+        chr_list <- c(chr_list,chr)
+        ends <- c(ends,counter)
+        counter <- counter + 1 
+        starts <- c(starts,counter)
+      }
+    }
+  }
+  coord_splits<-cbind(starts,ends)
+  visualization_matrix <- matrix(nrow = length(starts),ncol = length(starts))
+  colnames(visualization_matrix) <- chr_list
+  rownames(visualization_matrix) <- chr_list
+  for (i in 1:length(starts)){
+    for (j in 1:length(starts)){
+      subset <- c(new_P[coord_splits[i,1]:coord_splits[i,2],coord_splits[j,1]:coord_splits[j,2]])
+      subset <- abs(subset)
+      visualization_matrix[i,j] <- quantile(subset,quantile,na.rm=T)
+    }
+  }
+  visualization_matrix <- 2*(visualization_matrix-min(visualization_matrix))/(max(visualization_matrix)-min(visualization_matrix))-1
+  corrplot(visualization_matrix, type="upper",title= "Pairwise Chromosome Interaction Map",mar=c(0,0,2,0))
+}
+
 
 genome.interaction(tped,model_GIFT)
 
@@ -1395,7 +1446,7 @@ library(ggplot2)
 gg <- ggplot(run_data,aes(x=cores, y=(runtime),col=size )) + 
   geom_point()+
   ggtitle("Multi-thread Scaling")+
-  ylab("seconds")+
+  ylab("Seconds")+
   xlab("Threads")
 gg <- gg+guides(size=F)
 gg <- gg+labs(col="N-variants")
@@ -1405,8 +1456,8 @@ seconds <- c(174,216,277,346,466,551)
 samples <- c(100,500,1000,2000,3000,4000)
 sample_runtime<-as.data.frame(cbind(seconds,samples))
 
-gg<-ggplot(sample_runtime,aes(x=samples, y=time)) + 
-  geom_point()+
+gg<-ggplot(sample_runtime,aes(x=samples, y=seconds)) + 
+  geom_point(colour="blue",size=4)+
   ggtitle("Sample Size Scaling")+
   ylab("seconds")+
   xlab("N-samples")
@@ -1555,7 +1606,60 @@ write.table(ped_small,"/data/nbg153/ADHD/WISH_files_newest/test.ped",col.names=F
 write.table(tped_small,"/data/nbg153/ADHD/WISH_files_newest/test.tped",col.names=F,row.names=F,quote=F)
 write.table(data,"/data/nbg153/ADHD/WISH_files_newest/test_pheno.txt",col.names=F,row.names=F,quote=F)
 
+chr1 <- 1
+chr2 <- 2
+region1 <- 1
 
 
+correlations<-model_GIFT  
+pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {  
+  new_P <- (1-correlations$Pvalues)
+  if (is.character(tped)){
+    message("loading tped file")
+    tped <- fread(tped,data.table=F)
+  }
+  else if (!is.data.frame(tped)){
+    stop("tped file not file or data frame")
+  }
+  total_map <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,4)]
+  total_map[,2] <- as.numeric(total_map[,2])
+  map1 <-total_map[total_map[,1] == chr1,]
+  map2 <-total_map[total_map[,1] == chr2,]
+  first_snp1 <- map1[1,2]
+  last_snp1 <- map1[dim(map1)[1],2]
+  size1 <- ceiling((last_snp1-first_snp1)/span)
+  first_snp2 <- map2[1,2]
+  last_snp2 <- map2[dim(map2)[1],2]
+  size2 <- ceiling((last_snp2-first_snp2)/span)
+  heatmap_matrix<-matrix(NA,nrow=size1,ncol=size2)
+  for (region1 in 1:size1){
+    for (region2 in 1:size2){
+         coords1<-(which(map1[,2] >= first_snp1+(region1-1)*span & map1[,2] < first_snp1+(region1)*span))
+         if (length(coords1) > 0 ){
+           coords2<-(which(map2[,2] >= first_snp2+(region2-1)*span & map2[,2] < first_snp2+(region2)*span))
+           if (length(coords2) > 0){
+             #print("match")
+             #print(coords1)
+             #print(coords2)
+             #print(mean(new_P[coords1,coords2]))
+             heatmap_matrix[region1,region2]<- mean(new_P[coords1,coords2],na.rm=T)
+           }
+         }
+    }
+  }
+  heatmap_matrix_original <- heatmap_matrix
+  NA_map <- is.na(heatmap_matrix)
+  cols<-colSums(NA_map)
+  rows<-rowSums(NA_map)
+  heatmap_matrix <- heatmap_matrix[rows < size2,cols<size1]
+  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(dim(heatmap_matrix)[2]))
+  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(dim(heatmap_matrix)[1]))
+  heatmap3(heatmap_matrix,scale="none",main=,Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(heatmap_matrix)[1]-2,"end")),labCol=c("start",rep("",dim(heatmap_matrix)[2]-2),"end"))
+  title("Pairwise Chromosomal Interaction", line= -2)
+  return(heatmap_matrix_original)
+  }
+
+pairwise.chr.map(1,2,tped,model_GIFT)
 
 
+tped12<-tped[tped[,1] %in% c(1,2),]
