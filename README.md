@@ -83,7 +83,7 @@ We recommend prefiltering your data using a main effect filter. For example you 
 
 plink --file \<ped file basename\> --linear --o \<output basename\>
 
-The computed p-values can be used in R as filter. 
+The computed p-values can be used in later steps as filter. 
 
 ***Loading data into R***
 
