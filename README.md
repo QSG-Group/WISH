@@ -43,7 +43,11 @@ install.packages(c("doParallel", "foreach","fastcluster", "Rcpp", "RcppEigen", "
 library("devtools")
 install_github("QSG-Group/WISH")
 ```
+
+# Reference Manual
+
 For the reference manual see the WISH.pdf file
+
 # Test files
 
 The files test.ped, test.tped and test_pheno.txt show how you have to structure your input files
@@ -77,9 +81,9 @@ with strong computing facilities.
 
 We recommend prefiltering your data using a main effect filter. For example you can run a simple GWAS using plink:
 
-plink --file <ped file basename> --linear --o <output basename>
+plink --file \<ped file basename\> --linear --o \<output basename\>
 
-The computed p-values can be used in R as filter. 
+The computed p-values can be used in later steps as filter. 
 
 ***Loading data into R***
 
