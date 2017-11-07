@@ -702,7 +702,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 #' @export
 
 
-generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=1) {
+generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=2) {
   enableWGCNAThreads(threads)
   if (values=="Pvalue"){
     corr <- (1-correlations$Pvalues)*(correlations$Coefficients/abs(correlations$Coefficients))
@@ -717,7 +717,7 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
     temp_corr <- temp_corr/(abs(min(temp_corr)))
     corr[temp_corr < 0] <- temp_corr[temp_corr < 0]
   }
-  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:22)), verbose = 5)
+  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:30)), verbose = 5)
   connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
   sizeGrWindow(10,5)
   par(mfrow=c(1,2))
