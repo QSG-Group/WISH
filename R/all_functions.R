@@ -718,35 +718,40 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
     corr[temp_corr < 0] <- temp_corr[temp_corr < 0]
   }
   sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:30)), verbose = 5)
-  connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
-  sizeGrWindow(10,5)
-  par(mfrow=c(1,2))
-  hist(connectivity,xlab="connectivity")
-  scaleFreePlot(connectivity)
-  par(mfrow=c(1,1))
-  #select SNPs for network construction based on connectivity
-  select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
-  select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
-  #create adjacency matrix (correlation matrix raised to power beta)
-  adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
-  #calculate dissimilarity TOM
-  dissTOM <- 1-(TOMsimilarity(adjMat))
-  #create gene dendrogram based on diss TOM
-  genetree <- flashClust(as.dist(dissTOM), method="average")
-  #cut branches of the tree= modules
-  dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
-                              deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
-  #give modules a color as name
-  moduleColors = labels2colors(dynamicMods)
-  #sizeGrWindow(8,6)
-  #plot dendrogram with the module colors
-  plotDendroAndColors(genetree, moduleColors,
-                      dendroLabels=F, hang=0.03,
-                      addGuide=T, guideHang = 0.05,
-                      main="Gene dendrogram and modules")
-  output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
-  names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
-  return(output)
+  if(is.na(sft$powerEstimate)){
+    print("Scale free topology does not hold, power estimate is NA")
+  }
+  if(!(is.na(sft$powerEstimate))){
+    connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
+    sizeGrWindow(10,5)
+    par(mfrow=c(1,2))
+    hist(connectivity,xlab="connectivity")
+    scaleFreePlot(connectivity)
+    par(mfrow=c(1,1))
+    #select SNPs for network construction based on connectivity
+    select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
+    select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
+    #create adjacency matrix (correlation matrix raised to power beta)
+    adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
+    #calculate dissimilarity TOM
+    dissTOM <- 1-(TOMsimilarity(adjMat))
+    #create gene dendrogram based on diss TOM
+    genetree <- flashClust(as.dist(dissTOM), method="average")
+    #cut branches of the tree= modules
+    dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
+                                deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
+    #give modules a color as name
+    moduleColors = labels2colors(dynamicMods)
+    #sizeGrWindow(8,6)
+    #plot dendrogram with the module colors
+    plotDendroAndColors(genetree, moduleColors,
+                        dendroLabels=F, hang=0.03,
+                        addGuide=T, guideHang = 0.05,
+                        main="Gene dendrogram and modules")
+    output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
+    names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
+    return(output)
+  }
 }
 
 
