@@ -863,10 +863,13 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
       tagging_markers <- c(tagging_markers,selection) 
     }  
   }
+  colnames(new_genotype)<-colnames(genotype[,tagging_markers])
+  rownames(new_genotype)<-rownames(genotype)
   output<-list(new_genotype,tagging_markers,snp_block_matrix,r2_values)
   names(output)<-c("genotype","tagging_genotype","genotype_block_matrix")
   return(output)
 }
+
 
 #' Function to plot summary pseudo-manhattan plots of variants.
 #' @description Visualize summary statistics for interactions based on total sum 

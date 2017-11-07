@@ -1663,3 +1663,14 @@ pairwise.chr.map(1,2,tped,model_GIFT)
 
 
 tped12<-tped[tped[,1] %in% c(1,2),]
+
+library(data.table)
+ped <- tped <- fread("../ADHD/WISH_files_newest/test.tped", data.table = F)
+tped <- fread("../ADHD/WISH_files_newest/test.tped", data.table = F)
+
+
+gene
+
+
+
+
