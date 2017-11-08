@@ -719,7 +719,7 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
   }
   sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:30)), verbose = 5)
   if(is.na(sft$powerEstimate)){
-    print("Scale free topology does not hold, power estimate is NA")
+    message("Scale free topology does not hold, power estimate is NA")
   }
   if(!(is.na(sft$powerEstimate))){
     connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)

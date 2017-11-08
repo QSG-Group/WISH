@@ -1665,12 +1665,88 @@ pairwise.chr.map(1,2,tped,model_GIFT)
 tped12<-tped[tped[,1] %in% c(1,2),]
 
 library(data.table)
-ped <- tped <- fread("../ADHD/WISH_files_newest/test.tped", data.table = F)
+ped <- tped <- fread("../ADHD/WISH_files_newest/test.ped", data.table = F)
 tped <- fread("../ADHD/WISH_files_newest/test.tped", data.table = F)
+phenotype <- read.table("../ADHD/WISH_files_newest/test_pheno.txt") 
+
+chr <- c()
+for (i in 1:10){
+chr <- c(chr,rep(i,250))
+}
+
+tped[,1]<- chr
+
+genotype<-generate.genotype(ped,tped)
 
 
-gene
+
+LD_genotype<-LD_blocks_t(genotype)
+LD_genotype$tagging_genotype
+genotype1 <- LD_genotype$genotype
+
+epistatic.correlation(phenotype[,2], genotype1,threads = 20 ,test=T)
+
+phenotype[,2] <- rnorm(203)+sample(c(1:10),203,replace=T)
+
+write.table(phenotype,"test_pheno.txt",col.names=F,row.names=F,quote=F)
+
+correlations<-epistatic.correlation(phenotype[,2], genotype, threads = 20 ,test=F,simple=F)
+hist(correlations$Coefficients)
 
 
+genome.interaction(tped,correlations) 
 
+write.table(tped,"tped.test",col.names=F,row.names=F,quote=F)
+correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coefficients < -1000] <-0
+hist(correlations$Coefficients)
+
+modules <-generate.modules(correlations,threads=2)
+
+
+generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=2) {
+  enableWGCNAThreads(threads)
+  if (values=="Pvalue"){
+    corr <- (1-correlations$Pvalues)*(correlations$Coefficients/abs(correlations$Coefficients))
+  }
+  if (values=="Coefficients"){
+    temp_corr<-correlations$Coefficients
+    temp_corr[temp_corr < 0] <- 0
+    temp_corr <- temp_corr/(max(temp_corr))
+    corr <- temp_corr
+    temp_corr <- correlations$Coefficients
+    temp_corr[temp_corr > 0] <- 0
+    temp_corr <- temp_corr/(abs(min(temp_corr)))
+    corr[temp_corr < 0] <- temp_corr[temp_corr < 0]
+  }
+  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:30)), verbose = 5)
+  connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
+  sizeGrWindow(10,5)
+  par(mfrow=c(1,2))
+  hist(connectivity,xlab="connectivity")
+  scaleFreePlot(connectivity)
+  par(mfrow=c(1,1))
+  #select SNPs for network construction based on connectivity
+  select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
+  select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
+  #create adjacency matrix (correlation matrix raised to power beta)
+  adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
+  #calculate dissimilarity TOM
+  dissTOM <- 1-(TOMsimilarity(adjMat))
+  #create gene dendrogram based on diss TOM
+  genetree <- flashClust(as.dist(dissTOM), method="average")
+  #cut branches of the tree= modules
+  dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
+                              deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
+  #give modules a color as name
+  moduleColors = labels2colors(dynamicMods)
+  #sizeGrWindow(8,6)
+  #plot dendrogram with the module colors
+  plotDendroAndColors(genetree, moduleColors,
+                      dendroLabels=F, hang=0.03,
+                      addGuide=T, guideHang = 0.05,
+                      main="Gene dendrogram and modules")
+  output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
+  names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
+  return(output)
+}
 
