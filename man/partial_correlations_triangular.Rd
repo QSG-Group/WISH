@@ -5,7 +5,8 @@
 \title{***Internal Use Function*** This function calculates the epistatic correlations
 in a subset of a matrix space based on coordiantes}
 \usage{
-partial_correlations_triangular(genotype,genotype_rev,phenotype,coords,model)
+partial_correlations_triangular(genotype_1,genotype_rev_1,phenotype,coords,
+glm=F,model=1)
 }
 \arguments{
 \item{genotype_1}{Dataframe with the genotype information, resulting from 
@@ -21,6 +22,8 @@ fixed/random factors. Phenotypes should be continous variables.}
 
 \item{coords}{Matrix of row split coordinates for subseting input space}
 
+\item{glm}{setting controlling if is a lm or glm}
+
 \item{model}{Specification controlling if MM or Mm directed interaction
 model is used.}
 }
@@ -33,6 +36,7 @@ Internal package function for calculating epsitatic correlations
 in sub-matrices
 }
 \examples{
-partial_correlations <- partial_correlaiton_triangular(genotype_1,genotype_rev_1,phenotype,coords,model)
+partial_correlations <- partial_correlaiton_triangular(genotype_1,genotype_rev_1,
+phenotype,coords,model)
 
 }

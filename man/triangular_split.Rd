@@ -7,7 +7,7 @@ matrices of quadratic matrices into approximately equally sized partitions
 for use in in dividing correlation calculations into equal size for 
 parallelization}
 \usage{
-triangular_split(n, split)
+triangular_split(n,split)
 }
 \arguments{
 \item{n}{Row and Column length of the n by n matrix the triangular matrix

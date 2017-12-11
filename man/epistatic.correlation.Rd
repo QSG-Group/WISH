@@ -5,7 +5,7 @@
 \title{Calculate the epistatic interaction effect between SNP pairs  using a genotype 
 data frame created from genarate.genotype()}
 \usage{
-epistatic.correlation(phenotype, genotype, threads,test,simple)
+epistatic.correlation(phenotype,genotype,threads=1,test=T,simple=T,glm=F)
 }
 \arguments{
 \item{phenotype}{Dataframe with the rows correspinding to the individuals
@@ -32,7 +32,7 @@ minor/minor directed interaction model are tested (simple=T) or if if
 interactions on the major/minor minor axis are tested as well, with the 
 best one of the two being selected (simple=F).}
 
-\item{glm}{if T will use a generelized linear model with a binomial link
+\item{glm}{If T will use a generelized linear model with a binomial link
 function instead of a regular linear model. This should be used if your
 phenotype is binary.}
 }

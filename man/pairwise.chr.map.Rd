@@ -5,7 +5,7 @@
 \title{Visualization of chromosomal pairwise region epistatic interaction strength, based on 
 statistical significance}
 \usage{
-pairwise.chr.map(chr1,chr2,tped,correlations,span)
+pairwise.chr.map(chr1,chr2,tped,correlations,span=10^6)
 }
 \arguments{
 \item{chr1}{The name of the first chromosome in the comparison, matching the name
@@ -24,16 +24,16 @@ epistatic.correlation()}
 \item{span}{Region in bp. Default is 1 Mb (10^6)}
 }
 \value{
-Outputs a plot visualizing the pairwise chromosome region interaction and the orignal matrix
-for generating the heatmap including colums and rows  with no variants
+Outputs a plot visualizing the pairwise chromosome region interaction
 }
 \description{
 Visualization of chromosome pairwise region epistatic interaction strength, based on 
 statistical significance. The value is based of the most signficant epistatic interaction in each
 region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-1 Mb regions. Regions with no interactions are filtered out
+1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+the data.
 }
 \examples{
- region_interactions<-pairwise.chr.map("1","2",tped,correlations)
+ pairwise.chr.map("1","2",tped,correlations)
 
 }

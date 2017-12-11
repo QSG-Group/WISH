@@ -8,7 +8,8 @@
 #' created, consisting of one numeric value per SNP, per individual. This function
 #' takes Plink output (1,2-coding) to create the genotype matrix which can be used
 #' to calculate genomic correlations or epistatic interaction effects 
-#' @usage generate.genotype(ped, tped,gwas.p=gwas_pvalues)
+#' @usage generate.genotype(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,
+#' gwas.p=NULL,major.freq=0.95,fast.read=T)
 #' @param ped Input ped file as .ped file or data.frame. The ped file (.ped) is an 
 #' input file from Plink: The PED file is a
 #' white-space (space or tab) delimited file: the first six columns are mandatory:
@@ -27,13 +28,6 @@
 #' The first 4 columns of a TPED file are the same as a 4-column MAP file.
 #' Then all genotypes are listed for all individuals for each particular SNP on 
 #' each line. Again, SNPs are 1,2-coded.
-#' @param coding Either linear or binary. 
-#'  \describe{
-#'  \item{binary}{Variants are 0,1,2 coded: 0 for homozygous for the major 
-#'  allele, 1 for heterozygous, and 2 for homozygous for the minor allele.}
-#'  \item{linear}{SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
-#'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele.}
-#'  }
 #' @param snp.id  Input SNP ids to use in analysis if not all snps are to be used
 #' @param pvalue A value for the cutoff of the SNPs which should be remained 
 #' in the matrix, based on the pvalue resulting from the GWAS. Default value
@@ -51,9 +45,11 @@
 #' in the ped and tped file, and a maximum of approximately 950.000 colums in the ped
 #' file. This can be increased by changing the stack size (do this only if you
 #' know what you are doing)
-#' @return A genotype dataframe and the corresponding vector of passing variants.
+#' @return A genotype dataframe and the corresponding vector of passing snps in a vector.
 #' The genotype data frame has a row for each individual and a column
-#'  for each variant. Variant are coded according to the coding parameter
+#'  for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
+#'  allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
+#'  Missing values are NA coded. 
 #' @references Lisette J.A. Kogelman and Haja N.Kadarmideen (2014). 
 #' Weighted Interaction SNP Hub (WISH) network method for building genetic
 #' networks for complex diseases and traits using whole genome genotype data.
@@ -66,7 +62,7 @@
 #' 
 #' 
 #' 
-generate.genotype <- function(ped,tped,coding="binary",snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) { 
+generate.genotype <- function(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,gwas.p=NULL,major.freq=0.95,fast.read=T) {
   if (fast.read == T){
     if (is.character(ped)){
       message("loading ped file")
@@ -174,16 +170,10 @@ generate.genotype <- function(ped,tped,coding="binary",snp.id=NULL, pvalue=0.05,
   #Ensuring that we only get variants with enough variation. We remove variants with no minor alleles or/and with a majore allele frequency over 0.95(default)
   passing_snps <- which((colSums((genotype == 2),na.rm = T) < (dim(genotype)[1]*major.freq)) & colSums(is.na(genotype)) < (0.05*dim(genotype)[1]))
   genotype <- genotype[,passing_snps]
-  if(coding=="linear"){
-    genotype[genotype==2] <- 3
-    genotype[genotype==1] <- 2
-    genotype[genotype==3] <-1
-  }
-  if (coding=="binary"){
-    genotype[genotype==2] <- 0
-    genotype[genotype==1] <- 2
-    genotype[genotype==1.5] <- 1
-  }
+  genotype[genotype==2] <- 0
+  genotype[genotype==1] <- 4
+  genotype[genotype==1.5] <- 1
+  genotype[genotype==4] <- 2
   message(paste(length(passing_snps), "passed QC"), sep=" ")
   return(genotype)
 }
@@ -198,7 +188,7 @@ generate.genotype <- function(ped,tped,coding="binary",snp.id=NULL, pvalue=0.05,
 #' parallelization 
 #' @description Internal function for splitting triangular matrices into
 #' approximately equal parts
-#' @usage triangular_split(n, split)
+#' @usage triangular_split(n,split)
 #' @param n Row and Column length of the n by n matrix the triangular matrix
 #' originates from
 #' @param split Number of partitions to split the triangular matrix in
@@ -240,7 +230,8 @@ triangular_split <- function(n,split) {
 #' in a subset of a matrix space based on coordiantes 
 #' @description Internal package function for calculating epsitatic correlations
 #' in sub-matrices
-#' @usage partial_correlations_triangular(genotype,genotype_rev,phenotype,coords,model)
+#' @usage partial_correlations_triangular(genotype_1,genotype_rev_1,phenotype,coords,
+#' glm=F,model=1)
 #' @param genotype_1 Dataframe with the genotype information, resulting from 
 #' the function generate.genotype(). Make sure that the dataframe contains the 
 #' same individuals as in the phenotype-file, and that those are in the 
@@ -250,12 +241,14 @@ triangular_split <- function(n,split) {
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Phenotypes should be continous variables. 
 #' @param coords Matrix of row split coordinates for subseting input space
+#' @param glm setting controlling if is a lm or glm
 #' @param model Specification controlling if MM or Mm directed interaction
 #' model is used.
 #' @return Epsitatic correlations and P-values for the selected set or subset
 #' of the data
 #' @examples
-#' partial_correlations <- partial_correlaiton_triangular(genotype_1,genotype_rev_1,phenotype,coords,model)
+#' partial_correlations <- partial_correlaiton_triangular(genotype_1,genotype_rev_1,
+#' phenotype,coords,model)
 #' 
 #' @export
 
@@ -328,7 +321,7 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' @description A WISH network can be built based on epistatic interaction 
 #' effects between SNP pairs. Those interaction effects are calculated using
 #' linear models. 
-#' @usage epistatic.correlation(phenotype, genotype, threads,test,simple)
+#' @usage epistatic.correlation(phenotype,genotype,threads=1,test=T,simple=T,glm=F)
 #' @param phenotype Dataframe with the rows correspinding to the individuals
 #' in the analysis,and columns for the different measured phenotypes and 
 #' fixed/random factors. Only give one phenotype column at a time. Phenotypes
@@ -348,7 +341,7 @@ partial_correlations_triangular <- function(genotype_1,genotype_rev_1,phenotype,
 #' minor/minor directed interaction model are tested (simple=T) or if if 
 #' interactions on the major/minor minor axis are tested as well, with the 
 #' best one of the two being selected (simple=F).
-#' @param glm if T will use a generelized linear model with a binomial link
+#' @param glm If T will use a generelized linear model with a binomial link
 #' function instead of a regular linear model. This should be used if your
 #' phenotype is binary. 
 #' @return A list of two matrices. The first matrix gives the epistatic
@@ -521,9 +514,9 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,g
 #' significance of epistatic interaction between all interactions in each
 #' chromosome pair, scaled to 1 to -1. 
 #' @import corrplot
-#' @usage genome.interaction(tped,correlations)
-#' @param tped The tped file used in generate.genotype(). The variants must
-#' be sorted by chromosome, matching the order of the variants in the correlation 
+#' @usage genome.interaction(tped,correlations,quantile=0.9)
+#' @param tped The tped file used in generate.genotype(). The SNPs must
+#' be sorted by chromosome, matching the order of the SNPs in the correlation 
 #' matrices. 
 #' @param correlations List of epistatic correlations and p-values genrated by
 #' epistatic.correlation()
@@ -593,9 +586,10 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
 #' statistical significance. The value is based of the most signficant epistatic interaction in each
 #' region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-#' 1 Mb regions. Regions with no interactions are filtered out
+#' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
+#' the data.  
 #' @import heatmap3
-#' @usage pairwise.chr.map(chr1,chr2,tped,correlations,span)
+#' @usage pairwise.chr.map(chr1,chr2,tped,correlations,span=10^6)
 #' @param chr1 The name of the first chromosome in the comparison, matching the name
 #' from the tped file
 #' @param chr2 The name of the second chromosome in the comparison, matching the name
@@ -606,60 +600,85 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' @param span Region in bp. Default is 1 Mb (10^6)
 #' @param correlations List of epistatic correlations and p-values genrated by
 #' epistatic.correlation()
-#' @return Outputs a plot visualizing the pairwise chromosome region interaction and the orignal matrix
-#' for generating the heatmap including colums and rows  with no variants
+#' @return Outputs a plot visualizing the pairwise chromosome region interaction
 #' @examples
-#'  region_interactions<-pairwise.chr.map("1","2",tped,correlations)
+#'  pairwise.chr.map("1","2",tped,correlations)
 #' 
 #' @export
 
 
 pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {  
   new_P <- (1-correlations$Pvalues)
-  if (is.character(tped)){
-    message("loading tped file")
-    tped <- fread(tped,data.table=F)
-  }
-  else if (!is.data.frame(tped)){
-    stop("tped file not file or data frame")
-  }
+  message("loading tped file")
+  tped <- fread(tped,data.table=F)
   total_map <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,4)]
   total_map[,2] <- as.numeric(total_map[,2])
-  map1 <-total_map[total_map[,1] == chr1,]
-  map2 <-total_map[total_map[,1] == chr2,]
-  first_snp1 <- map1[1,2]
-  last_snp1 <- map1[dim(map1)[1],2]
-  size1 <- ceiling((last_snp1-first_snp1)/span)
-  first_snp2 <- map2[1,2]
-  last_snp2 <- map2[dim(map2)[1],2]
-  size2 <- ceiling((last_snp2-first_snp2)/span)
-  heatmap_matrix<-matrix(NA,nrow=size1,ncol=size2)
-  for (region1 in 1:size1){
-    for (region2 in 1:size2){
-      coords1<-(which(map1[,2] >= first_snp1+(region1-1)*span & map1[,2] < first_snp1+(region1)*span))
-      if (length(coords1) > 0 ){
-        coords2<-(which(map2[,2] >= first_snp2+(region2-1)*span & map2[,2] < first_snp2+(region2)*span))
-        if (length(coords2) > 0){
-          #print("match")
-          #print(coords1)
-          #print(coords2)
-          #print(mean(new_P[coords1,coords2]))
-          heatmap_matrix[region1,region2]<- mean(new_P[coords1,coords2],na.rm=T)
-        }
+  map <-total_map[total_map[,1] == chr1,]
+  first_snp <- map[1,2]
+  last_snp <- map[dim(map)[1],2]
+  #size <- round((last_snp-first_snp)/span,digits=0)
+  progress <- 1
+  ends <- c()
+  for (snp in map[,2]){   
+    if ( snp < (first_snp+progress*span)) {
+      starts <- 1
+      row <- 1
+    }
+    else {
+      while (snp > first_snp+(progress+1)*span) {
+        progress <- progress +1
       }
+      print("what")
+      ends <- c(ends,row)
+      row <- row +1
+      starts <- c(starts,row)
+      progress <- progress + 1
     }
   }
-  heatmap_matrix_original <- heatmap_matrix
-  NA_map <- is.na(heatmap_matrix)
-  cols<-colSums(NA_map)
-  rows<-rowSums(NA_map)
-  heatmap_matrix <- heatmap_matrix[rows < size2,cols<size1]
-  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(dim(heatmap_matrix)[2]))
-  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(dim(heatmap_matrix)[1]))
-  heatmap3(heatmap_matrix,scale="none",main=,Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(heatmap_matrix)[1]-2,"end")),labCol=c("start",rep("",dim(heatmap_matrix)[2]-2),"end"))
-  title("Pairwise Chromosomal Interaction", line= -2)
-  return(heatmap_matrix_original)
+  ends<- c(ends,dim(map)[1])
+  chromosome_choords1 <- cbind(starts,ends)
+  chromosome_choords1 <- chromosome_choords1 + which(total_map[,1] == chr1)[1]-1
+  map <-total_map[total_map[,1] == chr2,]
+  first_snp <- map[1,2]
+  last_snp <- map[dim(map)[1],2]
+  progress <- 1
+  ends <- c()
+  for (snp in map[,2]){   
+    if ( snp < (first_snp+progress*10^6)) {
+      #print("!t")
+      starts <- 1
+      row <- 1
+    }
+    else {
+      while (snp > first_snp+(progress+1)*10^6) {
+        progress <- progress +1
+      }
+      #print("what")
+      ends <- c(ends,row)
+      row <- row +1
+      starts <- c(starts,row)
+      progress <- progress + 1
+    }
+  }
+  ends<- c(ends,dim(map)[1])
+  chromosome_choords2 <- cbind(starts,ends)
+  chromosome_choords2 <- chromosome_choords2 + which(total_map[,1] == chr2)[1]-1
+  visualization_matrix <- matrix(nrow = dim(chromosome_choords1)[1],ncol = dim(chromosome_choords2)[1])
+  colnames(visualization_matrix) <- 1:(dim(chromosome_choords2)[1])
+  rownames(visualization_matrix) <- 1:(dim(chromosome_choords1)[1]) 
+  for (i in 1:dim(chromosome_choords1)[1]){
+    for (j in 1:dim(chromosome_choords2)[1]){
+      subset <- c(new_P[chromosome_choords1[i,1]:chromosome_choords1[i,2],chromosome_choords2[j,1]:chromosome_choords2[j,2]])
+      subset <- abs(subset)
+      visualization_matrix[i,j] <- max(subset)
+      
+    }
+  }
+  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(dim(chromosome_choords2)[1]))
+  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(dim(chromosome_choords1)[1]))
+  heatmap3(visualization_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(chromosome_choords1)[1]-2),"end"),labCol=c("start",rep("",dim(chromosome_choords2)[1]-2),"end"))
 }
+
 
 #' Function for creation of genomic interaction modules based on WGCNA framework. 
 #' @description Generate.modules normalizes the epistatic interaction coefficients
@@ -670,7 +689,8 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 #' @import WGCNA
 #' @import flashClust
 #' @import dynamicTreeCut
-#' @usage generate.modules(correlations)
+#' @usage generate.modules(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),
+#' n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=1)
 #' @param correlations List of epistatic correlations and p-values generated by
 #' epistatic.correlation()
 #' @param power Powers to test for creating scale free network. Only change if the default
@@ -702,7 +722,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
 #' @export
 
 
-generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=2) {
+generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=1) {
   enableWGCNAThreads(threads)
   if (values=="Pvalue"){
     corr <- (1-correlations$Pvalues)*(correlations$Coefficients/abs(correlations$Coefficients))
@@ -717,41 +737,36 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
     temp_corr <- temp_corr/(abs(min(temp_corr)))
     corr[temp_corr < 0] <- temp_corr[temp_corr < 0]
   }
-  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:30)), verbose = 5)
-  if(is.na(sft$powerEstimate)){
-    message("Scale free topology does not hold, power estimate is NA")
-  }
-  if(!(is.na(sft$powerEstimate))){
-    connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
-    sizeGrWindow(10,5)
-    par(mfrow=c(1,2))
-    hist(connectivity,xlab="connectivity")
-    scaleFreePlot(connectivity)
-    par(mfrow=c(1,1))
-    #select SNPs for network construction based on connectivity
-    select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
-    select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
-    #create adjacency matrix (correlation matrix raised to power beta)
-    adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
-    #calculate dissimilarity TOM
-    dissTOM <- 1-(TOMsimilarity(adjMat))
-    #create gene dendrogram based on diss TOM
-    genetree <- flashClust(as.dist(dissTOM), method="average")
-    #cut branches of the tree= modules
-    dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
-                                deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
-    #give modules a color as name
-    moduleColors = labels2colors(dynamicMods)
-    #sizeGrWindow(8,6)
-    #plot dendrogram with the module colors
-    plotDendroAndColors(genetree, moduleColors,
-                        dendroLabels=F, hang=0.03,
-                        addGuide=T, guideHang = 0.05,
-                        main="Gene dendrogram and modules")
-    output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
-    names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
-    return(output)
-  }
+  sft = pickSoftThreshold(corr, powerVector = c(seq(1,10,0.1),c(12:22)), verbose = 5)
+  connectivity <- adjacency.fromSimilarity(corr, power=sft$powerEstimate,type=type)
+  sizeGrWindow(10,5)
+  par(mfrow=c(1,2))
+  hist(connectivity,xlab="connectivity")
+  scaleFreePlot(connectivity)
+  par(mfrow=c(1,1))
+  #select SNPs for network construction based on connectivity
+  select.snps <- corr[rank(-colSums(connectivity),ties.method="first")<=n.snps,rank(-colSums(connectivity),ties.method="first")<=n.snps ]
+  select.snps[,c(1:ncol(select.snps))] <- sapply(select.snps[,c(1:ncol(select.snps))], as.numeric)
+  #create adjacency matrix (correlation matrix raised to power beta)
+  adjMat <- adjacency.fromSimilarity(select.snps,power=sft$powerEstimate,type=type)
+  #calculate dissimilarity TOM
+  dissTOM <- 1-(TOMsimilarity(adjMat))
+  #create gene dendrogram based on diss TOM
+  genetree <- flashClust(as.dist(dissTOM), method="average")
+  #cut branches of the tree= modules
+  dynamicMods = cutreeDynamic(dendro=genetree, distM=dissTOM, 
+                              deepSplit=2,pamRespectsDendro=F, minClusterSize=minClusterSize)
+  #give modules a color as name
+  moduleColors = labels2colors(dynamicMods)
+  #sizeGrWindow(8,6)
+  #plot dendrogram with the module colors
+  plotDendroAndColors(genetree, moduleColors,
+                      dendroLabels=F, hang=0.03,
+                      addGuide=T, guideHang = 0.05,
+                      main="Gene dendrogram and modules")
+  output <- list(select.snps,connectivity,adjMat,dissTOM,genetree,dynamicMods,moduleColors,sft$powerEstimate)
+  names(output) <- c("SNPs","connectivity","adjMat","dissTom","genetree","modules","modulecolors","power.estimate")
+  return(output)
 }
 
 
@@ -763,16 +778,16 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
 #' as long as the average of all pairwise r2 values of the genotypes in the block are above threshold. When
 #' the values goes below the threshold, the last genotype tested will be the base of a new block. For each
 #' block the median genotype in block will be selected as a tagging genotype. 
-#' @usage LD_blocks(genotype,threshold,max_blocksize)
+#' @usage LD_blocks(genotype,threshold=0.9,max_block_size=1000)
 #' @param genotype A genotype matrix from generate.genotype()
 #' @param threshold The threshold used for generating blocks, indicating the minimum average pairwise r2
 #' value allowed. 
 #' @param max_block_size The maximum block size allowed.  
 #' @return Returns a named list with the following objects:
 #' \describe{
-#' \item{genotype} {The tagging genotypes selected from the blocks}
-#' \item{tagging_genotype} {The genotype selected to represent each block. The median genotype, rounded down is selected}
-#' \item{genotype_block_matrix} {A matrix indicating which block each genotype belongs to}
+#' \item{genotype}{The tagging genotypes selected from the blocks}
+#' \item{tagging_genotype}{The genotype selected to represent each block. The median genotype, rounded down is selected}
+#' \item{genotype_block_matrix}{A matrix indicating which block each genotype belongs to}
 #' } 
 #' @return Returns a named list with the following objects:
 #' @examples
@@ -868,20 +883,17 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
       tagging_markers <- c(tagging_markers,selection) 
     }  
   }
-  colnames(new_genotype)<-colnames(genotype[,tagging_markers])
-  rownames(new_genotype)<-rownames(genotype)
   output<-list(new_genotype,tagging_markers,snp_block_matrix,r2_values)
   names(output)<-c("genotype","tagging_genotype","genotype_block_matrix")
   return(output)
 }
-
 
 #' Function to plot summary pseudo-manhattan plots of variants.
 #' @description Visualize summary statistics for interactions based on total sum 
 #' of -loglikelihoods for each variant across all interactions og the sum of
 #' effect sizes.
 #' @import ggplot2 
-#' @usage pseudo_manahattan(tped,correlations)
+#' @usage pseudo_manhattan(tped,correlations,values="p")
 #' @param tped Input tped file as .tped file or data frame. The tped file (.tped)
 #' is a transposed ped file, from Plink. 
 #' This file contains the SNP and genotype information where one row is a SNP.
@@ -890,9 +902,11 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
 #' each line. Again, SNPs are 1,2-coded.#'
 #' @param correlations List of epistatic correlations and p-values generated by
 #' epistatic.correlation()
+#' @param values Values can either be p or for p-values or c for coefficients
+#' depending on if you wan't to use the effects sizes for p-values for plotting 
 #' @return Plots a pseudo manhattan plot
 #' @examples
-#' pseudo_manahattan(tped,correlations)
+#' pseudo_manhattan(tped,correlations)
 #' 
 #' @export
 

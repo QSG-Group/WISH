@@ -4,7 +4,8 @@
 \alias{generate.genotype}
 \title{Import genotype data in the correct format for network construction}
 \usage{
-generate.genotype(ped, tped,gwas.p=gwas_pvalues)
+generate.genotype(ped,tped,snp.id=NULL, pvalue=0.05,id.select=NULL,
+gwas.p=NULL,major.freq=0.95,fast.read=T)
 }
 \arguments{
 \item{ped}{Input ped file as .ped file or data.frame. The ped file (.ped) is an 
@@ -26,14 +27,6 @@ This file contains the SNP and genotype information where one row is a SNP.
 The first 4 columns of a TPED file are the same as a 4-column MAP file.
 Then all genotypes are listed for all individuals for each particular SNP on 
 each line. Again, SNPs are 1,2-coded.}
-
-\item{coding}{Either linear or binary. 
-\describe{
-\item{binary}{Variants are 0,1,2 coded: 0 for homozygous for the major 
-allele, 1 for heterozygous, and 2 for homozygous for the minor allele.}
-\item{linear}{SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
-allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele.}
-}}
 
 \item{snp.id}{Input SNP ids to use in analysis if not all snps are to be used}
 
@@ -59,9 +52,11 @@ file. This can be increased by changing the stack size (do this only if you
 know what you are doing)}
 }
 \value{
-A genotype dataframe and the corresponding vector of passing variants.
+A genotype dataframe and the corresponding vector of passing snps in a vector.
 The genotype data frame has a row for each individual and a column
- for each variant. Variant are coded according to the coding parameter
+ for each SNP. SNPs are 1,1.5,2 coded: 1 for homozygous for the major 
+ allele, 1.5 for heterozygous, and 2 for homozygous for the minor allele. 
+ Missing values are NA coded.
 }
 \description{
 For network construction based on both genomic correlations

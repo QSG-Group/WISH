@@ -4,11 +4,11 @@
 \alias{genome.interaction}
 \title{Visualization of pairwise chromosome epistatic interactions on a genome wide level}
 \usage{
-genome.interaction(tped,correlations)
+genome.interaction(tped,correlations,quantile=0.9)
 }
 \arguments{
-\item{tped}{The tped file used in generate.genotype(). The variants must
-be sorted by chromosome, matching the order of the variants in the correlation 
+\item{tped}{The tped file used in generate.genotype(). The SNPs must
+be sorted by chromosome, matching the order of the SNPs in the correlation 
 matrices.}
 
 \item{correlations}{List of epistatic correlations and p-values genrated by

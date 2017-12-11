@@ -5,7 +5,7 @@
 \title{Function for creating blocks of input genotypes based on LD and selecting tagging variants in each
 block. Genotypes should be sorted by genomic coordinates and chromosome.}
 \usage{
-LD_blocks(genotype,threshold,max_blocksize)
+LD_blocks(genotype,threshold=0.9,max_block_size=1000)
 }
 \arguments{
 \item{genotype}{A genotype matrix from generate.genotype()}
@@ -18,9 +18,9 @@ value allowed.}
 \value{
 Returns a named list with the following objects:
 \describe{
-\item{genotype} {The tagging genotypes selected from the blocks}
-\item{tagging_genotype} {The genotype selected to represent each block. The median genotype, rounded down is selected}
-\item{genotype_block_matrix} {A matrix indicating which block each genotype belongs to}
+\item{genotype}{The tagging genotypes selected from the blocks}
+\item{tagging_genotype}{The genotype selected to represent each block. The median genotype, rounded down is selected}
+\item{genotype_block_matrix}{A matrix indicating which block each genotype belongs to}
 }
 
 Returns a named list with the following objects:
