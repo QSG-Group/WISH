@@ -4,9 +4,7 @@ Weighted Interaction SNP Hub R Package
 
 # Installation
 
-Install WISH with the following commands:
-
-For All users Users:
+First install WGCNA and dependencies:
 
 ```
 ### Installing WGCNA first
@@ -15,6 +13,18 @@ source("http://bioconductor.org/biocLite.R")
 biocLite()
 biocLite(c("GO.db", "preprocessCore", "impute"))
 install.packages("WGCNA")
+```
+
+Then use simple installation using source:
+
+```
+source("https://install-github.me/QSG-Group/WISH")
+```
+
+
+You can also install using devtools install_github():
+
+```
 ### Instaling devtools
 install.packages(c("devtools","curl", "httr"))
 ### Install WISH
@@ -22,26 +32,21 @@ library("devtools")
 install_github("QSG-Group/WISH")
 ```
 
-If there are problems try this way:
+Finally if none of that works install dependencies manually:
 
 ```
 ### Instaling devtools
 install.packages(c("devtools","curl", "httr"))
-
-
-### Installing WGCNA first
-install.packages(c("matrixStats", "Hmisc", "splines", "foreach", "doParallel", "fastcluster", "dynamicTreeCut", "survival"))
-source("http://bioconductor.org/biocLite.R")
-biocLite()
-biocLite(c("GO.db", "preprocessCore", "impute"))
-install.packages("WGCNA")
 
 ### Install Rest of Dependencies
-install.packages(c("doParallel", "foreach","fastcluster", "Rcpp", "RcppEigen", "data.table", "corrplot", "heatmap3", "flashClust", "bigmemory", "parallel"))
+install.packages(c("doParallel", "foreach","fastcluster", "Rcpp", "RcppEigen", "data.table", "corrplot", "heatmap3", "flashClust", "bigmemory", "parallel", "ggplot2"))
 
 ### Install WISH
+source("https://install-github.me/QSG-Group/WISH")
+# or
 library("devtools")
 install_github("QSG-Group/WISH")
+
 ```
 
 # Reference Manual
