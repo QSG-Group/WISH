@@ -1750,3 +1750,15 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
   return(output)
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
