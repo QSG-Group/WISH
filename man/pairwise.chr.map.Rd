@@ -5,7 +5,7 @@
 \title{Visualization of chromosomal pairwise region epistatic interaction strength, based on 
 statistical significance}
 \usage{
-pairwise.chr.map(chr1,chr2,tped,correlations,span=10^6)
+pairwise.chr.map(chr1,chr2,tped,correlations,50)
 }
 \arguments{
 \item{chr1}{The name of the first chromosome in the comparison, matching the name
@@ -14,14 +14,16 @@ from the tped file}
 \item{chr2}{The name of the second chromosome in the comparison, matching the name
 from the tped file}
 
-\item{tped}{The tped file used in generate.genotype(). The SNPs must
+\item{tped}{The tped file used in generate.genotype(), either as a datafrae or filelink. The SNPs must
 be sorted by chromosome and position on the chromosome, matching the order of the SNPs in the correlation 
 matrices.}
 
 \item{correlations}{List of epistatic correlations and p-values genrated by
 epistatic.correlation()}
 
-\item{span}{Region in bp. Default is 1 Mb (10^6)}
+\item{grid_size}{Number of regions to split each chromosome. This value is approximate as
+the number variants is not always easily divisible by the number of splits. The actual
+number of regions are displayed in the output plot}
 }
 \value{
 Outputs a plot visualizing the pairwise chromosome region interaction
@@ -29,9 +31,8 @@ Outputs a plot visualizing the pairwise chromosome region interaction
 \description{
 Visualization of chromosome pairwise region epistatic interaction strength, based on 
 statistical significance. The value is based of the most signficant epistatic interaction in each
-region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
-the data.
+region pair, ranging from 1 ( strongest) to 0 (weakest). The original input data and tped file needs
+to be sorted by chromosome and coordinate.
 }
 \examples{
  pairwise.chr.map("1","2",tped,correlations)

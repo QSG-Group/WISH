@@ -585,19 +585,20 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' statistical significance 
 #' @description Visualization of chromosome pairwise region epistatic interaction strength, based on 
 #' statistical significance. The value is based of the most signficant epistatic interaction in each
-#' region pair, ranging from 1 ( strongest) to 0 (weakest). By defaulty chromosomes are separated into
-#' 1 Mb regions, but if SNPs are more spaced out that this it will adjust to the smallest region that fit
-#' the data.  
+#' region pair, ranging from 1 ( strongest) to 0 (weakest). The original input data and tped file needs
+#' to be sorted by chromosome and coordinate.
 #' @import heatmap3
-#' @usage pairwise.chr.map(chr1,chr2,tped,correlations,span=10^6)
+#' @usage pairwise.chr.map(chr1,chr2,tped,correlations,50)
 #' @param chr1 The name of the first chromosome in the comparison, matching the name
 #' from the tped file
 #' @param chr2 The name of the second chromosome in the comparison, matching the name
 #' from the tped file
-#' @param tped The tped file used in generate.genotype(). The SNPs must
+#' @param tped The tped file used in generate.genotype(), either as a datafrae or filelink. The SNPs must
 #' be sorted by chromosome and position on the chromosome, matching the order of the SNPs in the correlation 
 #' matrices. 
-#' @param span Region in bp. Default is 1 Mb (10^6)
+#' @param grid_size Number of regions to split each chromosome. This value is approximate as
+#' the number variants is not always easily divisible by the number of splits. The actual
+#' number of regions are displayed in the output plot
 #' @param correlations List of epistatic correlations and p-values genrated by
 #' epistatic.correlation()
 #' @return Outputs a plot visualizing the pairwise chromosome region interaction
@@ -607,76 +608,36 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
 #' @export
 
 
-pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {  
-  new_P <- (1-correlations$Pvalues)
-  message("loading tped file")
-  tped <- fread(tped,data.table=F)
+pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size){
+  if (is.character(tped)){
+    message("loading tped file")
+    tped <- fread(tped,data.table=F)
+  }
+  else if (!is.data.frame(tped)){
+    stop("tped file not file or data frame")
+  }
   total_map <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,4)]
-  total_map[,2] <- as.numeric(total_map[,2])
-  map <-total_map[total_map[,1] == chr1,]
-  first_snp <- map[1,2]
-  last_snp <- map[dim(map)[1],2]
-  #size <- round((last_snp-first_snp)/span,digits=0)
-  progress <- 1
-  ends <- c()
-  for (snp in map[,2]){   
-    if ( snp < (first_snp+progress*span)) {
-      starts <- 1
-      row <- 1
-    }
-    else {
-      while (snp > first_snp+(progress+1)*span) {
-        progress <- progress +1
-      }
-      print("what")
-      ends <- c(ends,row)
-      row <- row +1
-      starts <- c(starts,row)
-      progress <- progress + 1
+  chr_pair_values <-correlations$Pvalues[which(total_map[,1] == chr1),which(total_map[,1] == chr2)]
+  chr_sizes <-dim(chr_pair_values)   
+  chr1_coords<-1:chr_sizes[1]
+  chr2_coords<-1:chr_sizes[2]
+  chr1_chunk<-(length(chr1_coords)/grid_size)
+  chr2_chunk<-floor(length(chr2_coords)/grid_size)
+  chr1_splits<-split(chr1_coords,ceiling(seq_along(chr1_coords)/chr1_chunk))
+  chr2_splits<-split(chr2_coords,ceiling(seq_along(chr2_coords)/chr2_chunk))
+  mean_matrix<-matrix(0,nrow=length(chr1_splits),ncol=length(chr2_splits))
+  counter <- c(0,0)
+  for ( i in chr1_splits){
+    counter[1]<- counter[1]+1
+    counter[2]<-0
+    for (j in chr2_splits){
+      counter[2]<- counter[2]+1
+      mean_matrix[counter[1],counter[2]] <- mean(chr_pair_values[i,j])
     }
   }
-  ends<- c(ends,dim(map)[1])
-  chromosome_choords1 <- cbind(starts,ends)
-  chromosome_choords1 <- chromosome_choords1 + which(total_map[,1] == chr1)[1]-1
-  map <-total_map[total_map[,1] == chr2,]
-  first_snp <- map[1,2]
-  last_snp <- map[dim(map)[1],2]
-  progress <- 1
-  ends <- c()
-  for (snp in map[,2]){   
-    if ( snp < (first_snp+progress*10^6)) {
-      #print("!t")
-      starts <- 1
-      row <- 1
-    }
-    else {
-      while (snp > first_snp+(progress+1)*10^6) {
-        progress <- progress +1
-      }
-      #print("what")
-      ends <- c(ends,row)
-      row <- row +1
-      starts <- c(starts,row)
-      progress <- progress + 1
-    }
-  }
-  ends<- c(ends,dim(map)[1])
-  chromosome_choords2 <- cbind(starts,ends)
-  chromosome_choords2 <- chromosome_choords2 + which(total_map[,1] == chr2)[1]-1
-  visualization_matrix <- matrix(nrow = dim(chromosome_choords1)[1],ncol = dim(chromosome_choords2)[1])
-  colnames(visualization_matrix) <- 1:(dim(chromosome_choords2)[1])
-  rownames(visualization_matrix) <- 1:(dim(chromosome_choords1)[1]) 
-  for (i in 1:dim(chromosome_choords1)[1]){
-    for (j in 1:dim(chromosome_choords2)[1]){
-      subset <- c(new_P[chromosome_choords1[i,1]:chromosome_choords1[i,2],chromosome_choords2[j,1]:chromosome_choords2[j,2]])
-      subset <- abs(subset)
-      visualization_matrix[i,j] <- max(subset)
-      
-    }
-  }
-  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(dim(chromosome_choords2)[1]))
-  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(dim(chromosome_choords1)[1]))
-  heatmap3(visualization_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel ,labRow=c("start",rep("",dim(chromosome_choords1)[1]-2),"end"),labCol=c("start",rep("",dim(chromosome_choords2)[1]-2),"end"))
+  xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(counter[1]))
+  ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(counter[2]))
+  heatmap3(mean_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel,labRow=c("start",rep("",(counter[1]-2)),"end"),labCol=c("start",rep("",(counter[2]-2)),"end"))
 }
 
 
