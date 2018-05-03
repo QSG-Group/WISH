@@ -1803,7 +1803,7 @@ chr2 <- 2
 grid_size <- 50
 
 
-test_pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size,){
+test_pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size){
   total_map <- tped[tped[,2] %in% rownames(correlations$Pvalues),c(1,4)]
   chr_pair_values <-correlations$Pvalues[which(total_map[,1] == chr1),which(total_map[,1] == chr2)]
   chr_sizes <-dim(chr_pair_values)   
@@ -1820,7 +1820,7 @@ test_pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size,){
     counter[2]<-0
     for (j in chr2_splits){
       counter[2]<- counter[2]+1
-      mean_matrix[counter] <- mean(chr_pair_values[i,j])
+           mean_matrix[counter[1],counter[2]] <- mean(chr_pair_values[i,j])
     }
   }
   xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(counter[1]))
@@ -1828,7 +1828,195 @@ test_pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size,){
   heatmap3(mean_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel,labRow=c("start",rep("",(counter[1]-2)),"end"),labCol=c("start",rep("",(counter[2]-2)),"end"))
 }
 
-test_pairwise.chr.map(1,2,tped,correlations,50)
+test_pairwise.chr.map(1,2,tped,correlations,40) 
+
+
+
+#### Simulate Genotype ####
+
+
+uniform_genotype_sampler <- function(n_samples,n_genotypes) {
+  genotypes <- matrix(0,nrow = n_samples, ncol= n_genotypes)
+  for (i in c(1:n_genotypes)){
+    maf<-runif(1,0,0.5)
+    maf2 <- maf^2
+    genotype <- runif(n_samples)
+    mm <-genotype < maf2
+    Mm <- genotype >= maf2 & genotype < (maf2+maf*(1-maf))
+    MM <- genotype  >=(maf2+maf*(1-maf))
+    genotype[mm] <- 2
+    genotype[Mm] <- 1
+    genotype[MM] <- 0
+    genotypes[,i] <- genotype
+  }
+  return(genotypes)
+}
+
+
+
+epistasis_layer <- function(genotype,n_pheno){
+  n_snps <- dim(genotype)[2]
+  epi_pheno <- rep(0,n_pheno)
+  effect_sizes<- matrix(0,nrow=n_snps,ncol=n_snps) 
+  for ( i in 1:n_snps){
+    n_values <- length(i:n_snps)
+    x1 <- 1000
+    x0 <- 0.001
+    y <- runif(n_values)
+    n=5
+    #power law
+    x = ((x1^(n+1) - x0^(n+1))*y + x0^(n+1))^(1/(n+1))
+    #rescaling to frequent low values
+  
+    effect_sizes[i,i:n_snps] <- x
+  }
+  x_max = max(effect_sizes)
+  x <- effect_sizes
+  x = (-1*x+max(x))
+  x <- x^(log10(dim(genotype)[2]^2))
+  x=x/max(x)*10
+  for (i in 1:n_snps){
+    sign <-sample(c(-1,1),replace=T,n_snps)
+    x[,i] <- sign*x[,i]
+  }
+  x = x*(effect_sizes !=0)
+  effect_sizes = x
+  for (i in 1:n_snps){
+    if (i+1 <= n_snps){
+    for (j in (i+1):n_snps){
+      epi_geno<-genotype[,i]*genotype[,j]      
+      epi_pheno <- epi_pheno+effect_sizes[i,j]*epi_geno
+    }  
+    }
+  }
+ return(list(epi_pheno,effect_sizes)) 
+}
+
+
+main_layer <- function(genotype,range){ 
+  x1 <- 1000
+  x0 <- 0.001
+  y <- runif(dim(genotype)[2])
+  n=5
+  #power law
+  x = ((x1^(n+1) - x0^(n+1))*y + x0^(n+1))^(1/(n+1))
+  x_max = max(x)
+  x = (-1*x+max(x))^log10(length(y))
+  sign <-sample(c(-1,1),replace=T,length(x))
+  effect_sizes <- x*sign
+  pheno <- colSums(effect_sizes*t(genotype))
+  range_main <- max(pheno)-min(pheno)
+  range_factor <- range_main/range
+  effect_sizes <- effect_sizes/range_factor
+  filter<- sd(effect_sizes)
+  effect_sizes[effect_sizes < sd(effect_sizes)] <- 0
+  pheno <- colSums(effect_sizes*t(genotype))
+  output<-(list(pheno,effect_sizes,filter))
+  names(output)<-c("Phenotype","Effect_sizes","Filter")
+  return(output)
+}
+
+enviroment_layer <- function(epi_layer,main_layer,n){
+  genetic_effects<-epi_layer+main_layer
+  baseline <- abs(min(genetic_effects)-max(genetic_effects))
+  enviromental_layer <-rnorm(n=n,mean=0.1*baseline,sd=0.05*baseline)
+  return(list(baseline+enviromental_layer+genetic_effects,baseline,enviromental_layer))
+}
+
+
+sampled_data<-uniform_genotype_sampler(200,200)
+epi_pheno<-epistasis_layer(sampled_data,n_pheno=200)
+
+phenotype<-enviroment_layer(epi_pheno[[1]],main_pheno[[1]],200)
+hist(phenotype[[1]])
+
+test_phenotype<-phenotype[[1]]
+main_pheno[[1]]
+
+sampled_data<-uniform_genotype_sampler(200,1000)
+main_pheno<-main_layer(sampled_data,range = 20)
+hist(main_pheno$Effect_sizes[main_pheno$Effect_sizes > 0])
+hist(main_pheno$Phenotype)
+
+sum(main_pheno$Effect_sizes > 0)
+sum(main_pheno$Effect_sizes > sd(main_pheno$Effect_sizes))
+
+
+
+
+
+
+cor.prob <- function(X, dfr = nrow(X) - 2) {
+  R <- cor(X)
+  above <- row(R) < col(R)
+  r2 <- R[above]^2
+  Fstat <- r2 * dfr / (1 - r2)
+  R[above] <- 1 - pf(Fstat, 1, dfr)
+    cor.mat <- t(R)
+  cor.mat[upper.tri(cor.mat)] <- NA
+  cor.mat
+}
+
+
+
+library(wish)
+
+
+test_corr<-epistatic.correlation(test_phenotype,sampled_data,threads = 5)
+
+coef<-test_corr$Coefficients
+
+u_coef<- coef*upper.tri(coef)
+u_epi<-epi_pheno[[2]]*upper.tri(epi_pheno[[2]])
+
+hist(c(u_coef)/c(u_epi)) 
+hist(u_epi[test_corr$Pvalues < 0.01])
+
+
+epistasis_generation <- function(main_effect,genotype,n_snps,hera_exp){ 
+  epi_pheno <- rep(0,length(main_effect))
+  total_effects<-sum(main_effect)/hera_exp
+  likelyhood<-abs(main_effect %*% t(main_effect))
+  likelyhood[likelyhood < min(main_effect)] <- 0
+  effect_vector <- sort(c(likelyhood[likelyhood > 0]),decreasing = T)
+  index <- 1
+  epi_total <- 0
+  while(epi_total < total_effects & index < length(effect_vector)){
+    epi_total <- epi_total+effect_vector[index]
+    print(c(index,effect_vector[index],total_effects,epi_total))
+    index <- index+1
+  }
+  likelyhood[likelyhood < effect_vector[index]] <- 0
+  epi_effects<- likelyhood
+  for (i in 1:n_snps){
+    if (i+1 <= n_snps){
+      for (j in (i+1):n_snps){
+        epi_geno<-genotype[,i]*genotype[,j]      
+        epi_pheno <- epi_pheno+epi_effects[i,j]*epi_geno
+      }  
+    }
+  }
+  output<-(list(epi_pheno,epi_effects,filter))
+  names(output)<-c("Phenotype","Effect_sizes","Filter")
+  return(output)
+  }
+
+sort(main_pheno$Effect_sizes)
+epi_pheno <- epistasis_generation(main_pheno$Effect_sizes,sampled_data,200,0.1)
+
+sum(likelyhood > 0)
+
+likelyhood<-abs(main_pheno$Effect_sizes %*% t(main_pheno$Effect_sizes))
+sd(likelyhood)
+
+sum(likelyhood > sd(likelyhood))
+hist(likelyhood)
+diag(likelyhood)<-main_pheno[[2]]^2
+
+
+
+
+
 
 
 
