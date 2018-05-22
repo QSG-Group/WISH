@@ -1330,6 +1330,8 @@ tped<-data.table::fread("../caw_project/GIFT_final2.tped",data.table = F)
 tped <- tped[!(tped$V1 %in%  c(0,23,24,25,26,27,28,29,30,31,32,33)),]
 
 load("../../nbg153/caw_project/model_GIFT.RData")
+genome.interaction(tped,model_GIFT)
+
 correlations <- model_GIFT
 genome.interaction <- function(tped,correlations,quantile=0.9) {
   if (is.character(tped)){
@@ -1483,7 +1485,8 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,span=10^6) {
   
   heatmap3(values,Rowv = NA,Colv = NA)
 }
-pairwise.chr.map(1,2,"../caw_project/GIFT_final2.tped",model_GIFT)
+par(oma=c(0,0,2,0))
+pairwise.chr.map(1,2,"../caw_project/GIFT_final2.tped",model_GIFT,grid_size = 50)
 
 
 hist(model_GIFT$Coefficients)
@@ -1845,12 +1848,32 @@ uniform_genotype_sampler <- function(n_samples,n_genotypes) {
     Mm <- genotype >= maf2 & genotype < (maf2+maf*(1-maf))
     MM <- genotype  >=(maf2+maf*(1-maf))
     genotype[mm] <- 2
-    genotype[Mm] <- 1
-    genotype[MM] <- 0
+    genotype[Mm] <- 1.5
+    genotype[MM] <- 1
     genotypes[,i] <- genotype
   }
   return(genotypes)
 }
+
+
+blockwise_genotype_sampler <- function(n_samples,n_genotypes) {
+  genotypes <- matrix(0,nrow = n_samples, ncol= n_genotypes)
+  for (i in c(1:n_genotypes)){
+    maf<-runif(1,0,0.5)
+    maf2 <- maf^2
+    genotype <- runif(n_samples)
+    mm <-genotype < maf2
+    Mm <- genotype >= maf2 & genotype < (maf2+maf*(1-maf))
+    MM <- genotype  >=(maf2+maf*(1-maf))
+    genotype[mm] <- 2
+    genotype[Mm] <- 1.5
+    genotype[MM] <- 1
+    genotypes[,i] <- genotype
+  }
+  return(genotypes)
+}
+
+
 
 
 
@@ -1920,26 +1943,12 @@ enviroment_layer <- function(epi_layer,main_layer,n){
   genetic_effects<-epi_layer+main_layer
   baseline <- abs(min(genetic_effects)-max(genetic_effects))
   enviromental_layer <-rnorm(n=n,mean=0.1*baseline,sd=0.05*baseline)
-  return(list(baseline+enviromental_layer+genetic_effects,baseline,enviromental_layer))
+  output <-list(baseline+enviromental_layer+genetic_effects,baseline,enviromental_layer)
+  names(output) <- c("Phenotype","baseline","enviromental")
+  return(output)
 }
 
 
-sampled_data<-uniform_genotype_sampler(200,200)
-epi_pheno<-epistasis_layer(sampled_data,n_pheno=200)
-
-phenotype<-enviroment_layer(epi_pheno[[1]],main_pheno[[1]],200)
-hist(phenotype[[1]])
-
-test_phenotype<-phenotype[[1]]
-main_pheno[[1]]
-
-sampled_data<-uniform_genotype_sampler(200,1000)
-main_pheno<-main_layer(sampled_data,range = 20)
-hist(main_pheno$Effect_sizes[main_pheno$Effect_sizes > 0])
-hist(main_pheno$Phenotype)
-
-sum(main_pheno$Effect_sizes > 0)
-sum(main_pheno$Effect_sizes > sd(main_pheno$Effect_sizes))
 
 
 
@@ -1962,22 +1971,13 @@ cor.prob <- function(X, dfr = nrow(X) - 2) {
 library(wish)
 
 
-test_corr<-epistatic.correlation(test_phenotype,sampled_data,threads = 5)
 
-coef<-test_corr$Coefficients
-
-u_coef<- coef*upper.tri(coef)
-u_epi<-epi_pheno[[2]]*upper.tri(epi_pheno[[2]])
-
-hist(c(u_coef)/c(u_epi)) 
-hist(u_epi[test_corr$Pvalues < 0.01])
-
-
-epistasis_generation <- function(main_effect,genotype,n_snps,hera_exp){ 
-  epi_pheno <- rep(0,length(main_effect))
+epistasis_generation <- function(main_pheno,main_effect,genotype,n_snps,hera_exp){ 
+  epi_pheno <- rep(0,length(main_pheno))
   total_effects<-sum(main_effect)/hera_exp
   likelyhood<-abs(main_effect %*% t(main_effect))
   likelyhood[likelyhood < min(main_effect)] <- 0
+  likelyhood[lower.tri(likelyhood)] <-0 
   effect_vector <- sort(c(likelyhood[likelyhood > 0]),decreasing = T)
   index <- 1
   epi_total <- 0
@@ -1993,30 +1993,111 @@ epistasis_generation <- function(main_effect,genotype,n_snps,hera_exp){
       for (j in (i+1):n_snps){
         epi_geno<-genotype[,i]*genotype[,j]      
         epi_pheno <- epi_pheno+epi_effects[i,j]*epi_geno
+        
       }  
     }
   }
   output<-(list(epi_pheno,epi_effects,filter))
   names(output)<-c("Phenotype","Effect_sizes","Filter")
   return(output)
-  }
+}
+
+
+epi_pheno<-epistasis_layer(sampled_data,n_pheno=200)
+
+phenotype<-enviroment_layer(epi_pheno[[1]],main_pheno[[1]],200)
+hist(phenotype[[1]])
+
+test_phenotype<-phenotype[[1]]
+main_pheno[[1]]
+
+sampled_data<-uniform_genotype_sampler(200,1000)
+
+hist(main_pheno$Effect_sizes[main_pheno$Effect_sizes > 0])
+hist(main_pheno$Phenotype)
+
+sum(main_pheno$Effect_sizes > 0)
+sum(main_pheno$Effect_sizes > sd(main_pheno$Effect_sizes))
+
 
 sort(main_pheno$Effect_sizes)
-epi_pheno <- epistasis_generation(main_pheno$Effect_sizes,sampled_data,200,0.1)
+sampled_data<-uniform_genotype_sampler(200,200)
+epi_pheno <- epistasis_generation(main_pheno$Phenotype,sampled_data,200,0.1)
+main_pheno<-main_layer(sampled_data,range = 20)
+hist(main_pheno$Effect_sizes)
+final_pheno<-enviroment_layer(epi_pheno$Phenotype,main_pheno$Phenotype,203)
 
-sum(likelyhood > 0)
-
-likelyhood<-abs(main_pheno$Effect_sizes %*% t(main_pheno$Effect_sizes))
-sd(likelyhood)
-
-sum(likelyhood > sd(likelyhood))
-hist(likelyhood)
-diag(likelyhood)<-main_pheno[[2]]^2
+length
 
 
+library(WISH)
+
+sampled_genotype<-genotype[,sample(651720,1000)]
+sampled_genotype[is.na(sampled_genotype)]<-0
+dim(sampled_genotype)
+
+main_pheno<-main_layer(as.matrix(sampled_genotype),range = 20)
+epi_pheno <- epistasis_generation(main_pheno$Phenotype,main_pheno$Effect_sizes,sampled_genotype,200,0.1)
+hist(main_pheno$Effect_sizes)
+hist(epi_pheno$Effect_sizes)
+final_pheno<-enviroment_layer(epi_pheno$Phenotype,main_pheno$Phenotype,203)
+test_corr<-epistatic.correlation(epi_pheno$Phenotype+main_pheno$Phenotype,sampled_genotype,threads = 20,test=F) 
 
 
 
+test_corr<-epistatic.correlation(rnorm(203,100,50),sampled_genotype,threads = 20,test=F) 
+
+adjusted<-(p.adjust(test_corr$Pvalue,method="bonferroni"))
+sum(adjusted< 0.05, na.rm=T)
 
 
+test_corr$Pvalues[is.na(test_corr$Pvalues)] <- 1
+test_corr$Coefficients[is.na(test_corr$Coefficients)]<-0
+
+test_corr$Coefficients[epi_pheno$Effect_sizes >0]
+
+hist(test_corr$Pvalues[epi_pheno$Effect_sizes >0]) 
+
+hist(epi_pheno$Effect_sizes[test_corr$Pvalues< 0.01]) 
+
+cor(test_corr$Pvalues[epi_pheno$Effect_sizes >0],epi_pheno$Effect_sizes[epi_pheno$Effect_sizes >0])
+     
+cor(test_corr$Coefficients[epi_pheno$Effect_sizes >0],epi_pheno$Effect_sizes[epi_pheno$Effect_sizes >0])    
+
+
+plot(test_corr$Coefficients[epi_pheno$Effect_sizes >0],epi_pheno$Effect_sizes[epi_pheno$Effect_sizes >0])    
+
+
+
+dim(test_corr$Pvalues)  
+dim(epi_pheno$Effect_sizes)  
+sum(epi_pheno$Effect_sizes >0)  
+
+cor(test_corr$Coefficients[epi_pheno$Effect_sizes >0],epi_pheno$Effect_sizes[epi_pheno$Effect_sizes >0])   
+
+library(data.table) 
+ 
+tped_variation<-fread("/data/nbg153/ADHD/WISH_files_newest/INDICES_1_2.tped",data.table = F) 
+ped1<-fread("/data/nbg153/ADHD/WISH_files_newest/part1.ped",data.table = F) 
+ped2<-fread("/data/nbg153/ADHD/WISH_files_newest/part2.ped",data.table = F) 
+ped3<-fread("/data/nbg153/ADHD/WISH_files_newest/part3.ped",data.table = F) 
+ped_variation<-cbind(ped1,ped2,ped3) 
+
+
+genotype<-generate.genotype 
+
+dim(genotype) 
+  
+sampled_genotype<-genotype[,sample(651720,200)] 
+
+total_minors<-sum(tped_variation[,5:410] == 1) 
+total_majors<-sum(tped_variation[,5:410] == 2) 
+total_minors/(total_majors+total_minors) 
+
+freq_minors<-rowSums(tped_variation[,5:410] == 1) 
+freq_majors<-rowSums(tped_variation[,5:410] == 2) 
+
+hist(freq_minors)
+hist(freq_majors)
+median(freq_minors)
 

@@ -509,10 +509,10 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,g
 
 #' Visualization of pairwise chromosome epistatic interactions on a genome wide level
 #' @description Visualization of the genome wide chromosome pairwise relative strength
-#' of epistatic interaction, ranging from 1 (strongest) to -1 (weakest).
+#' of epistatic interaction, ranging from 1 (strongest) to 0 (weakest).
 #' The strength is based on the 90th percentile quantile (default) of stastistical
 #' significance of epistatic interaction between all interactions in each
-#' chromosome pair, scaled to 1 to -1. 
+#' chromosome pair, scaled to 1 to 0. 
 #' @import corrplot
 #' @usage genome.interaction(tped,correlations,quantile=0.9)
 #' @param tped The tped file used in generate.genotype(). The SNPs must
@@ -576,8 +576,8 @@ genome.interaction <- function(tped,correlations,quantile=0.9) {
       visualization_matrix[i,j] <- quantile(subset,quantile,na.rm=T)
     }
   }
-  visualization_matrix <- 2*(visualization_matrix-min(visualization_matrix))/(max(visualization_matrix)-min(visualization_matrix))-1
-  corrplot(visualization_matrix, type="upper",title= "Pairwise Chromosome Interaction Map",mar=c(0,0,2,0))
+  visualization_matrix <- (visualization_matrix-min(visualization_matrix))/(max(visualization_matrix)-min(visualization_matrix))
+  corrplot(visualization_matrix, type="upper",title= "Pairwise Chromosome Interaction Map",mar=c(0,0,2,0),cl.lim = c(0, 1))
 }
 
 
@@ -637,7 +637,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size){
   }
   xlabel<-paste("Chromosome=",as.character(chr2),", N-regions=",as.character(counter[1]))
   ylabel<-paste("Chromosome=",as.character(chr1),", N-regions=",as.character(counter[2]))
-  heatmap3(mean_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel,labRow=c("start",rep("",(counter[1]-2)),"end"),labCol=c("start",rep("",(counter[2]-2)),"end"))
+  heatmap3(mean_matrix,scale="none",main="Pairwise Chromosomal Interaction",Rowv = NA,Colv = NA,xlab=xlabel,ylab=ylabel,labRow=c("start",rep("",(counter[1]-2)),"end"),labCol=c("start",rep("",(counter[2]-2)),"end"),col=heat.colors(100))
 }
 
 

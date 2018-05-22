@@ -22,10 +22,10 @@ Outputs a plot visualizing the chromosome interaction map
 }
 \description{
 Visualization of the genome wide chromosome pairwise relative strength
-of epistatic interaction, ranging from 1 (strongest) to -1 (weakest).
+of epistatic interaction, ranging from 1 (strongest) to 0 (weakest).
 The strength is based on the 90th percentile quantile (default) of stastistical
 significance of epistatic interaction between all interactions in each
-chromosome pair, scaled to 1 to -1.
+chromosome pair, scaled to 1 to 0.
 }
 \examples{
  genome.interaction(tped,correlations)
