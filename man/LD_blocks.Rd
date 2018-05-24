@@ -31,7 +31,7 @@ will generate LD blocks based on average LD between all members in each block, u
 Scanning linearly over the genotype file from the first row, genotypes will be contiously added to blocks
 as long as the average of all pairwise r2 values of the genotypes in the block are above threshold. When
 the values goes below the threshold, the last genotype tested will be the base of a new block. For each
-block the median genotype in block will be selected as a tagging genotype.
+block the variant with the highest average pairwise r2 value in block will be selected as a tagging genotype.
 }
 \examples{
  LD_blocks(genotype,threshold,max_blocksize)

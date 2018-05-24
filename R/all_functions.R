@@ -738,7 +738,7 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
 #' Scanning linearly over the genotype file from the first row, genotypes will be contiously added to blocks
 #' as long as the average of all pairwise r2 values of the genotypes in the block are above threshold. When
 #' the values goes below the threshold, the last genotype tested will be the base of a new block. For each
-#' block the median genotype in block will be selected as a tagging genotype. 
+#' block the variant with the highest average pairwise r2 value in block will be selected as a tagging genotype. 
 #' @usage LD_blocks(genotype,threshold=0.9,max_block_size=1000)
 #' @param genotype A genotype matrix from generate.genotype()
 #' @param threshold The threshold used for generating blocks, indicating the minimum average pairwise r2
@@ -760,21 +760,23 @@ generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10
 LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){ 
   snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
   rownames(snp_block_matrix) <- colnames(genotype)
+  tagging_variants <- c()
   n_snp <- 1
   start <- 2
   n_block <- 1
   network_size <- 0
-  r2_values <- c()
   block_coords <- list()
   snps <- dim(genotype)[2]
   snp_block_matrix[n_snp,] <- n_block
   while(start <= snps){ 
+    print(n_snp)
     if (n_snp == snps){
       snp_block_matrix[snps,1] = n_block
     }
     else{ 
       temp_sim <- 0
       network_pairs<-combn(c(n_snp:(start)),2)
+      r2_values <- c()
       for (i in 1:dim(network_pairs)[2]){
         start_t <- network_pairs[1,i]
         n_snp_t <- network_pairs[2,i]
@@ -800,12 +802,26 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
       }
       similarity <- temp_sim
       #print(c(similarity,similarity/network_size,network_size,start,n_snp))
-      if (similarity/network_size >= threshold && network_size < 1001){
+      if (similarity/network_size >= threshold && network_size < max_block_size){ 
         snp_block_matrix[start,1] = n_block
         start <- start+1
         network_size <-0
-        if (start > snps){
+        if (start > snps){ 
           block_coords[[n_block]] <- c(n_snp,(start-1))
+          for (i in min(network_pairs):max(network_pairs)){
+            if (i == min(network_pairs)){
+              r2_sum <- sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+              tagging_variant <- i
+            }
+            else{
+              new_r2<-sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+              if(new_r2 > r2_sum){
+                r2_sum <- new_r2
+                tagging_variant <- i
+              }
+            }
+          }
+          tagging_variants <- c(tagging_variants,tagging_variant)
         }
       }
       else {
@@ -814,10 +830,34 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
           n_block <- n_block + 1
           snp_block_matrix[snps,1] <- n_block
           block_coords[[n_block]] <- c(start,start)
+          tagging_variants <- c(tagging_variants,start)
           start <- start + 1
         }
         else{
+          r2_values <- r2_values[network_pairs[1,] != start & network_pairs[2,] != start]
           block_coords[[n_block]] <- c(n_snp,(start-1))
+          if (n_snp == start-1){
+            tagging_variant <- n_snp
+          }
+          else{
+            network_pairs<-combn(c(n_snp:(start-1)),2)
+            print((r2_values))
+            print((network_pairs))
+            for (i in min(network_pairs):max(network_pairs)){
+              if (i == min(network_pairs)){
+                r2_sum <- sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+                tagging_variant <- i
+              }
+              else{
+                new_r2<-sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+                if(new_r2 > r2_sum){
+                  r2_sum <- new_r2
+                  tagging_variant <- i
+                }
+              }
+            }
+          }
+          tagging_variants <- c(tagging_variants,tagging_variant)
           n_snp <- start
           n_block <- n_block +1
           snp_block_matrix[start,1] = n_block
@@ -828,23 +868,9 @@ LD_blocks <-function(genotype,threshold=0.9,max_block_size=1000){
     }
   }
   genotype <- as.matrix(genotype)
-  new_genotype <- matrix(0L, nrow = dim(genotype)[1], ncol = n_block)
-  counter <- 0
-  tagging_markers <- c()
-  message("Creating Blocks")
-  for (coords in block_coords){
-    counter <- counter + 1
-    if (coords[1] == coords[2]){
-      new_genotype[,counter] <- genotype[,coords[1]]
-      tagging_markers <- c(tagging_markers,coords[1])
-    }
-    else {
-      selection<- round(median(c(coords[1]:coords[2]))) 
-      new_genotype[,counter] <- genotype[,selection] 
-      tagging_markers <- c(tagging_markers,selection) 
-    }  
-  }
-  output<-list(new_genotype,tagging_markers,snp_block_matrix,r2_values)
+  new_genotype <- genotype[,tagging_variants]
+  
+  output<-list(new_genotype,tagging_variants,snp_block_matrix)
   names(output)<-c("genotype","tagging_genotype","genotype_block_matrix")
   return(output)
 }

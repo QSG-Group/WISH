@@ -2083,9 +2083,127 @@ ped2<-fread("/data/nbg153/ADHD/WISH_files_newest/part2.ped",data.table = F)
 ped3<-fread("/data/nbg153/ADHD/WISH_files_newest/part3.ped",data.table = F) 
 ped_variation<-cbind(ped1,ped2,ped3) 
 
+library(WISH)
 
-genotype<-generate.genotype 
-
+genotype<-generate.genotype(ped_variation,tped_variation)
+LD_blocks_test <-function(genotype,threshold=0.9,max_block_size=1000){ 
+  snp_block_matrix <- as.matrix(rep(0,dim(genotype)[2]))
+  rownames(snp_block_matrix) <- colnames(genotype)
+  tagging_variants <- c()
+  n_snp <- 1
+  start <- 2
+  n_block <- 1
+  network_size <- 0
+  block_coords <- list()
+  snps <- dim(genotype)[2]
+  snp_block_matrix[n_snp,] <- n_block
+  while(start <= snps){ 
+    print(n_snp)
+    if (n_snp == snps){
+      snp_block_matrix[snps,1] = n_block
+    }
+    else{ 
+      temp_sim <- 0
+      network_pairs<-combn(c(n_snp:(start)),2)
+      r2_values <- c()
+      for (i in 1:dim(network_pairs)[2]){
+        start_t <- network_pairs[1,i]
+        n_snp_t <- network_pairs[2,i]
+        # if (n_snp == snps){
+        #   snp_block_matrix[snps,1] = n_block
+        # }
+        #else{
+        #matches<-sum(genotype[,n_snp]/genotype[,start] == 1,na.rm = T)+(sum(c(c(genotype[,n_snp] == 1.5)+ c(genotype[,start] == 1.5)) == 1 ,na.rm = T)/2)
+        total <- sum(!is.na(genotype[,n_snp_t]+genotype[,start_t]))
+        usable_values <- !is.na(genotype[,n_snp_t]+genotype[,start_t])
+        #similarity <- matches/total
+        p_AB <- (sum(genotype[usable_values,n_snp_t]+genotype[usable_values,start_t] == 0,na.rm = T)+(sum(genotype[usable_values,n_snp_t]+ genotype[usable_values,start_t] == 1 ,na.rm = T)/2)+(sum(genotype[usable_values,n_snp_t]*genotype[usable_values,start_t] == 1 ,na.rm = T)/2))/total
+        p_A <- (sum(genotype[usable_values,n_snp_t] == 0,na.rm = T)+ sum(genotype[usable_values,n_snp_t] == 1,na.rm = T)/2)/total
+        p_a <- 1-p_A
+        p_B <- (sum(genotype[usable_values,start_t] == 0,na.rm = T)+ sum(genotype[usable_values,start_t] == 1,na.rm = T)/2)/total
+        p_b <- 1-p_B
+        #print(c(p_A,p_B,p_AB,start))
+        D <- p_AB-(p_A*p_B)
+        r2 <- D^2/(p_A*p_a*p_B*p_b)
+        r2_values <- c(r2_values,r2)
+        temp_sim <- r2+temp_sim
+        network_size <- network_size + 1
+      }
+      similarity <- temp_sim
+      #print(c(similarity,similarity/network_size,network_size,start,n_snp))
+      if (similarity/network_size >= threshold && network_size < max_block_size){ 
+        snp_block_matrix[start,1] = n_block
+        start <- start+1
+        network_size <-0
+        if (start > snps){ 
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          for (i in min(network_pairs):max(network_pairs)){
+            if (i == min(network_pairs)){
+              r2_sum <- sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+              tagging_variant <- i
+            }
+            else{
+                new_r2<-sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+                if(new_r2 > r2_sum){
+                  r2_sum <- new_r2
+                  tagging_variant <- i
+                }
+              }
+          }
+          tagging_variants <- c(tagging_variants,tagging_variant)
+          }
+        }
+      else {
+        if (start == snps){
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          n_block <- n_block + 1
+          snp_block_matrix[snps,1] <- n_block
+          block_coords[[n_block]] <- c(start,start)
+          tagging_variants <- c(tagging_variants,start)
+          start <- start + 1
+        }
+        else{
+          r2_values <- r2_values[network_pairs[1,] != start & network_pairs[2,] != start]
+          block_coords[[n_block]] <- c(n_snp,(start-1))
+          if (n_snp == start-1){
+            tagging_variant <- n_snp
+          }
+          else{
+            network_pairs<-combn(c(n_snp:(start-1)),2)
+            print((r2_values))
+            print((network_pairs))
+            for (i in min(network_pairs):max(network_pairs)){
+              if (i == min(network_pairs)){
+                r2_sum <- sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+                tagging_variant <- i
+              }
+              else{
+                  new_r2<-sum(r2_values[network_pairs[1,] == i | network_pairs[2,] == i],na.rm=T)
+                  if(new_r2 > r2_sum){
+                    r2_sum <- new_r2
+                    tagging_variant <- i
+                  }
+                }
+            }
+            }
+          tagging_variants <- c(tagging_variants,tagging_variant)
+          n_snp <- start
+          n_block <- n_block +1
+          snp_block_matrix[start,1] = n_block
+          start <- start +1
+          network_size <- 0
+        }
+      }
+    }
+  }
+  genotype <- as.matrix(genotype)
+  new_genotype <- genotype[,tagging_variants]
+  
+  output<-list(new_genotype,tagging_variants,snp_block_matrix)
+  names(output)<-c("genotype","tagging_genotype","genotype_block_matrix")
+  return(output)
+}
+LD_blocks(genotype[,1:10000])
 dim(genotype) 
   
 sampled_genotype<-genotype[,sample(651720,200)] 
@@ -2101,3 +2219,8 @@ hist(freq_minors)
 hist(freq_majors)
 median(freq_minors)
 
+
+LD_analysis<-LD_blocks_test(genotype[,1:10000])
+
+length(LD_analysis[[2]])
+length(LD_analysis[[3]])
