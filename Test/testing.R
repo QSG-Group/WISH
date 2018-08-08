@@ -57,7 +57,7 @@ partial_correlations_test <- function(phenotype,coords,model=1,size){
 }
 
 epistatic.correlation_test <- function(phenotype,genotype,parallel=1,test=T,simple=T){ 
-  phenotype < as.matrix(phenotype)
+  phenotype <- as.matrix(phenotype)
   n<-ncol(genotype)
   coords<-triangular_split(n,parallel)
   if(is.data.frame(genotype)){
