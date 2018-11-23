@@ -367,7 +367,7 @@ epistatic.correlation <- function(phenotype,genotype,threads=1,test=T,simple=T,g
   else {
     model <- 2
   }
-  phenotype < as.matrix(phenotype)
+  phenotype <- as.matrix(phenotype)
   n<-ncol(genotype)
   if(is.data.frame(genotype)){
     genotype[] <- lapply(genotype, as.numeric)
