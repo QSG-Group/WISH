@@ -156,9 +156,10 @@ correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coeff
 The range of desired values is individual depending on the properties of each dataset.
 
 # Contact
-Victor A. O Carmelo, vaocar@bioinformatics.dtu.dk
-Quantitative Systems Genetics Group
-Department of Bio and Health Informatics
+Haja Kadarmideen, hajak@dtu.dk
+Victor A. O Carmelo, vaocar@dtu.dk
+Quantitative genomics, bioinformatics and computational biology group
+Department of Applied Mathematics and Computer Science
 Technical University of Denmark
 
 # References
