@@ -154,6 +154,19 @@ coefficients between 1000 and -1000:
 correlations$Coefficients[correlations$Coefficients > 1000 |  correlations$Coefficients < -1000] <-0
 ```
 The range of desired values is individual depending on the properties of each dataset.
+It is also a good idea to set NA values to 0, as sometimes the linear models are not computable.
+```
+correlations$Coefficients[(is.na(correlations$Coefficients))]<-0
+correlations$Pvalues[(is.na(correlations$Pvalues))]<-1
+```
+To do trait module correlation fist extract eigen values:
+```
+ME<-moduleEigengenes(genotype, colors= modules$modulecolors,softPower = modules$power.estimate)
+```
+Then we can calculate the module trait correlations:
+```
+cor(<pheotype>,ME$eigengenes)
+```
 
 # Contact
 Haja Kadarmideen, hajak@dtu.dk
@@ -169,3 +182,8 @@ Weighted Interaction SNP Hub (WISH) network method for building genetic
 Networks for complex diseases and traits using whole genome genotype data. 
 BMC Systems Biology 8(Suppl 2):S5.  
 http://www.biomedcentral.com/1752-0509/8/S2/S5.
+
+Victor A. O. Carmelo, Lisette J. A. Kogelman, Majbritt Busk Madsen & Haja N. Kadarmideen(2018)
+WISH-R– a fast and efficient tool for construction of epistatic networks for complex traits and diseases
+BMC Bioinformatics volume 19, Article number: 277 
+https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2291-2
