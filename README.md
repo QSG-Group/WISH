@@ -96,7 +96,7 @@ The functions in the WISH R package accept both filepaths or data frames as inpu
 use following commands:
 ```
 library(data.table)
-ped <- tped <- fread(<filepath to pedfile>, data.table = F)
+ped <- fread(<filepath to pedfile>, data.table = F)
 tped <- fread(<filepath to tpedfile>, data.table = F)
 ```
 If memory load is a problem it is recommended to use the file paths, as the working enviroment
