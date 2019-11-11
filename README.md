@@ -132,7 +132,7 @@ epistatic.correlation(<phenotype dataframe>, genotype,threads = <number of cores
 This will give you an order of magnitude of the expected run time given your input, but not exact time. The next step is to run the analysis:
 We recommend using simple=F for better results:
 ```
-correlations<-epistatic.correlation(<phenotype dataframe>, genotype,parallel = <number of cores available> ,test=F,simple=F)
+correlations<-epistatic.correlation(<phenotype dataframe>, genotype,threads = <number of cores available> ,test=F,simple=F)
 ```
 Once you have calculated epistatic correlations you can get a coarse grained overview of the results using
 the genome.interaction() function:
