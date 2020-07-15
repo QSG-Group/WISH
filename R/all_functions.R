@@ -683,7 +683,7 @@ pairwise.chr.map <- function(chr1,chr2,tped,correlations,grid_size){
 #' @export
 
 
-generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=1) {
+generate.modules <- function(correlations,values="Coefficients",power=c(seq(1,10,0.1),c(12:22)),n.snps=dim(correlations$Coefficients)[1],minClusterSize=50,type="unsigned",threads=2) {
   enableWGCNAThreads(threads)
   if (values=="Pvalue"){
     corr <- (1-correlations$Pvalues)*(correlations$Coefficients/abs(correlations$Coefficients))
