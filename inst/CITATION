@@ -1,0 +1,10 @@
+citHeader("To cite WISH in publications, please use:")
+
+citEntry(entry = "Article",
+  author = "Lisette J.A. Kogelman and Haja N. Kadarmideen",
+  title = "Weighted Interaction SNP Hub (WISH) network method for building genetic Networks for complex diseases and traits using whole genome genotype data",
+  year = "2014",
+  journal = "BMC Systems Biology",
+  volume = "8"
+  url = "http://www.biomedcentral.com/1752-0509/8/S2/S5",
+  textVersion = "Kogelman LJA and Kadarmideen HN (2017). Weighted Interaction SNP Hub (WISH) network method for building genetic Networks for complex diseases and traits using whole genome genotype data. BMC Systems Biology 8(Suppl 2):S5. http://www.biomedcentral.com/1752-0509/8/S2/S5.")
